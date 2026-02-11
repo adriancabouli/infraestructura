@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+:root {
+  --brand-900: #005e9a;
+}
+
+@layer utilities {
+  .rounded-lg { border-radius: 20px !important; }
+  .rounded-xl { border-radius: 20px !important; }
+  .rounded-2xl { border-radius: 20px !important; }
+
+  .rounded-simple { border-radius: 12px !important; }
+
+  .i-am-simple-bagde {
+    border-radius: 12px !important;
+    padding: 12px !important;
+  }
+
+  .shadow-sm {
+    --tw-shadow: 0 1px 1px rgb(0 0 0 / 0.04),
+                 0 16px 40px -12px rgb(0 0 0 / 0.12);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+                var(--tw-ring-shadow), var(--tw-shadow);
+  }
+
+  /* Badge base (SIN @apply) */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 12px;
+    padding: 9px 9px;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 500;
+    text-transform: uppercase!important;
+    margin-top: 0px!important;
+  }
+
+  .bg-soft-gray { background: #f7f7f7 !important;}
+  .flecha-svg{position: absolute!important; top: 50%!important; margin-top: -13px!important;right: 9px!important;}
+  .padding-right-20{padding-right:20px!important} 
+  .padding-10{padding:10px!important}
+  .button-badge-selector{border: 0px!important;padding: 0px !important;box-shadow: none !important;}
+  .padding-top-3{padding-top:3px!important}
+  .separador-none{padding-top:2px!important;position: absolute!important;} 
+  button .width-100-percent{width:100%!important;} 
+  .margin-top{margin-top: 13px!important;}
+  .margin-top-5{margin-top:5px!important}
+  .margin-bottom-10{margin-bottom:10px!important}
+  .badge-pendiente { background-color: rgb(230, 207, 242); color: #3b1f4a; }
+  .badge-tramite { background-color: rgb(255, 207, 201); color: #6a1f1a; }
+  .badge-finalizado { background-color: rgb(212, 237, 188); color: #1f4d1a; }
+  .name {font-size: 13px!important;  border-bottom: 1px solid #e4e4e7;padding-bottom: 14px}
+  .uppercase{text-transform: uppercase!important;}
+
+  .select-arrow {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  
+    background-color: #fff; /* importante */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23666'%3E%3Cpath d='M6 8l4 4 4-4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center; /* movela acá */
+    background-size: 16px 16px;
+  
+    padding-right: 44px; /* deja lugar para la flecha */
+  } 
+}
