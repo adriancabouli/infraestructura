@@ -20,7 +20,7 @@ type Expediente = {
   edificio: string | null;
   caratula: string | null;
 
-  fecha_ingreso: string | null; // fijo
+  fecha_ingreso: string | null;
 
   etiqueta: string | null;
   ultima_gestion: string | null;
@@ -32,34 +32,12 @@ type Expediente = {
 
 type Gestion = {
   id: string;
+  created_at: string | null;
   fecha: string | null;
   gestion: string | null;
   se_giro_a: string | null;
   dependencia_actual: string | null;
 };
-
-function normalizeUpper(s: string) {
-  return s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase()
-    .trim();
-}
-
-function resolucionToSiNo(v: string | null) {
-  if (!v) return 'NO TIENE';
-
-  const n = v
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase()
-    .trim();
-
-  if (!n) return 'NO TIENE';
-  if (n.includes('NO')) return 'NO TIENE';
-
-  return 'SI';
-}
 
 function formatDateDMY(date: string | null) {
   if (!date) return '';
@@ -114,7 +92,6 @@ const EDIFICIOS = [
 ] as const;
 
 const TRAMITES = ['LP', 'CD', 'OTROS'] as const;
-const RESOLUCION = ['SI', 'NO'] as const;
 
 export default function ExpedienteDetailPage() {
   const params = useParams<{ id: string }>();
@@ -122,15 +99,20 @@ export default function ExpedienteDetailPage() {
   const id = params.id;
 
   const [exp, setExp] = useState<Expediente | null>(null);
+
+  // lista visible del historial
   const [gest, setGest] = useState<Gestion[]>([]);
+
+  // última gestión real (por created_at) para “Dependencia actual” de arriba
+  const [lastGest, setLastGest] = useState<Gestion | null>(null);
+
   const [loading, setLoading] = useState(true);
 
-  // editables locales (para registrar en historial, no guardan en expedientes)
+  // editables locales (se guardan en expedientes)
   const [editEdificio, setEditEdificio] = useState('');
   const [editTramite, setEditTramite] = useState('');
-  const [editResolucion, setEditResolucion] = useState('');
 
-  // historial
+  // historial (inputs)
   const [hFecha, setHFecha] = useState<string>('');
   const [hGestion, setHGestion] = useState<string>('');
   const [hSeGiroA, setHSeGiroA] = useState<string>('');
@@ -139,13 +121,12 @@ export default function ExpedienteDetailPage() {
   const [savingHist, setSavingHist] = useState(false);
   const [histErr, setHistErr] = useState<string | null>(null);
 
-  // etiqueta editable (sí guarda en expedientes)
+  // etiqueta editable
   const [savingEtiqueta, setSavingEtiqueta] = useState(false);
   const [etiquetaErr, setEtiquetaErr] = useState<string | null>(null);
 
   const [savingEdificio, setSavingEdificio] = useState(false);
   const [savingTramite, setSavingTramite] = useState(false);
-  const [savingResolucion, setSavingResolucion] = useState(false);
 
   const [fieldErr, setFieldErr] = useState<string | null>(null);
 
@@ -164,20 +145,31 @@ export default function ExpedienteDetailPage() {
       .eq('id', id)
       .single();
 
+    // ✅ 1) lista para mostrar historial (orden humano: fecha DESC)
     const { data: gData } = await supabase
       .from('gestiones')
-      .select('id, fecha, gestion, se_giro_a, dependencia_actual')
+      .select('id, created_at, fecha, gestion, se_giro_a, dependencia_actual')
       .eq('expediente_id', id)
-      .order('fecha', { ascending: false });
+      .order('fecha', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    // ✅ 2) última carga real (created_at DESC) para “Dependencia actual” arriba
+    const { data: lastData } = await supabase
+      .from('gestiones')
+      .select('id, created_at, fecha, gestion, se_giro_a, dependencia_actual')
+      .eq('expediente_id', id)
+      .order('created_at', { ascending: false })
+      .limit(1);
 
     if (!expErr && expData) {
       setExp(expData as any);
       setEditEdificio(expData.edificio ?? '');
       setEditTramite(expData.tipo_tramite ?? '');
-      setEditResolucion(expData.resolucion ?? '');
     }
 
     setGest((gData as any) ?? []);
+    setLastGest(lastData && lastData.length ? (lastData[0] as any) : null);
+
     setLoading(false);
   }
 
@@ -257,44 +249,6 @@ export default function ExpedienteDetailPage() {
     setEditTramite(tramiteValue ?? '');
   }
 
-  function resolucionToSiNo(v: string | null) {
-    if (!v) return 'NO';
-  
-    const n = v
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toUpperCase()
-      .trim();
-  
-    if (!n) return 'NO';
-    if (n.includes('NO')) return 'NO';
-  
-    return 'SI';
-  }
-
-  async function updateResolucion(next: string) {
-    if (!exp) return;
-  
-    setSavingResolucion(true);
-    setFieldErr(null);
-  
-    const resolucionValue = next && next.trim() !== '' ? next : null;
-  
-    const { error } = await supabase
-      .from('expedientes')
-      .update({ resolucion: resolucionValue })
-      .eq('id', exp.id);
-  
-    setSavingResolucion(false);
-  
-    if (error) {
-      setFieldErr(error.message);
-      return;
-    }
-  
-    setExp(prev => (prev ? { ...prev, resolucion: resolucionValue } : prev));
-  }
-  
   async function cargarHistorial() {
     if (!exp) return;
 
@@ -310,24 +264,12 @@ export default function ExpedienteDetailPage() {
       return;
     }
 
-    const cambios: string[] = [];
-
-    const baseEdificio = exp.edificio ?? '';
-    const baseTramite = exp.tipo_tramite ?? '';
-    const baseResolucion = exp.resolucion ?? '';
-
-    if (editEdificio && editEdificio !== baseEdificio) cambios.push(`Edificio: ${editEdificio}`);
-    if (editTramite && editTramite !== baseTramite) cambios.push(`Trámite: ${editTramite}`);
-    if (editResolucion && editResolucion !== baseResolucion) cambios.push(`Resolución: ${editResolucion}`);
-
-    const textoGestion = hGestion.trim() + (cambios.length ? ` | ${cambios.join(' | ')}` : '');
-
     setSavingHist(true);
 
     const { error } = await supabase.from('gestiones').insert({
       expediente_id: exp.id,
       fecha: hFecha,
-      gestion: textoGestion,
+      gestion: hGestion.trim(),
       se_giro_a: hSeGiroA.trim() || null,
       dependencia_actual: hDepActual.trim() || null,
     });
@@ -363,10 +305,7 @@ export default function ExpedienteDetailPage() {
     );
   }
 
-    // último movimiento del historial (ya viene ordenado desc)
-  const lastGest = gest && gest.length ? gest[0] : null;
-
-  // si hay historial, usar esos valores; si no, caer al valor del expediente
+  // ✅ arriba: usar última carga REAL (created_at)
   const shownUltimaGestion = lastGest?.gestion ?? exp.ultima_gestion;
   const shownSeGiroA = lastGest?.se_giro_a ?? exp.se_giro_a;
   const shownDepActual = lastGest?.dependencia_actual ?? exp.dependencia_actual;
@@ -424,7 +363,6 @@ export default function ExpedienteDetailPage() {
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <KV k="Año" v={exp.anio} />
 
-          {/* ✅ Etiqueta editable en vivo */}
           <div className="rounded-xl border border-zinc-200 bg-white p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="text-xs font-medium text-zinc-500">Etiqueta</div>
@@ -470,22 +408,6 @@ export default function ExpedienteDetailPage() {
           <KV k="Se giró a" v={shownSeGiroA} />
           <KV k="Dependencia actual" v={shownDepActual} />
           <KV k="Última gestión" v={shownUltimaGestion} />
-        </div>
-
-        {/* Resolución */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-3">
-          <div className="text-xs font-medium text-zinc-500">Resolución</div>
-
-          <input
-            value={exp.resolucion ?? ''}
-            placeholder="NO TIENE"
-            onChange={e => {
-              const v = e.target.value;
-              updateResolucion(v);
-            }}
-            disabled={savingResolucion}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-60"
-          />
         </div>
 
         {/* Cargar historial */}
@@ -554,7 +476,7 @@ export default function ExpedienteDetailPage() {
         </div>
 
         {fieldErr ? <div className="text-xs text-red-600">{fieldErr}</div> : null}
-        
+
         {/* Historial */}
         <div>
           <div className="mb-2 flex items-baseline justify-between">

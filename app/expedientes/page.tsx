@@ -13,6 +13,12 @@ const ETIQUETAS_OPCIONES = [
   'PENDIENTE RESOLVER',
 ] as const;
 
+type GestionMini = {
+  fecha: string | null;
+  dependencia_actual: string | null;
+  created_at?: string | null;
+};
+
 type Expediente = {
   id: string;
   expte_code: string;
@@ -20,7 +26,7 @@ type Expediente = {
   edificio: string | null;
   caratula: string | null;
 
-  fecha_ingreso: string | null;     // date (YYYY-MM-DD)
+  fecha_ingreso: string | null;
   ultima_gestion: string | null;
 
   se_giro_a: string | null;
@@ -31,7 +37,10 @@ type Expediente = {
 
   dependencia_actual: string | null;
 
-  created_at: string | null;        // lo uso como "Fecha" (si tu tabla lo tiene)
+  created_at: string | null;
+
+  // 👇 join con historial (gestiones)
+  gestiones?: GestionMini[] | null;
 };
 
 function normalize(s: string) {
@@ -44,7 +53,6 @@ function normalize(s: string) {
 function formatDateDMY(date: string | null) {
   if (!date) return '';
 
-  // Si viene como "YYYY-MM-DD" (date de Postgres), no uses Date() (timezone bug)
   const m = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (m) {
     const yyyy = m[1];
@@ -53,7 +61,6 @@ function formatDateDMY(date: string | null) {
     return `${dd}-${mm}-${yyyy}`;
   }
 
-  // Si viene timestamp, ahí sí parseamos
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return date;
 
@@ -87,15 +94,12 @@ export default function ExpedientesPage() {
   const [anio, setAnio] = useState('');
   const [etiqueta, setEtiqueta] = useState('');
 
-  //PAGINADOR
   const PAGE_SIZE = 50;
   const [page, setPage] = useState(1);
 
   useEffect(() => {
     setPage(1);
   }, [q, anio, etiqueta]);
-
-  /////////////////////////////////////////////
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -105,10 +109,35 @@ export default function ExpedientesPage() {
 
   async function load() {
     setLoading(true);
+
+    // ✅ Traemos gestiones (historial) y nos quedamos con 1 (la última) por expediente
     const { data, error } = await supabase
     .from('expedientes')
-    .select('id, expte_code, anio, edificio, caratula, fecha_ingreso, ultima_gestion, se_giro_a, tipo_tramite, created_at, etiqueta, resolucion, dependencia_actual')
-    .order('created_at', { ascending: false })
+    .select(`
+      id,
+      expte_code,
+      anio,
+      edificio,
+      caratula,
+      fecha_ingreso,
+      ultima_gestion,
+      se_giro_a,
+      tipo_tramite,
+      created_at,
+      etiqueta,
+      resolucion,
+      dependencia_actual,
+      gestiones:gestiones (
+        fecha,
+        dependencia_actual,
+        created_at,
+        id
+      )
+    `)
+    .order('created_at', { ascending: false }) // expedientes
+    .order('created_at', { ascending: false, referencedTable: 'gestiones' }) // ✅ ultima por inserción
+    .order('id', { ascending: false, referencedTable: 'gestiones' }) // ✅ desempate
+    .limit(1, { referencedTable: 'gestiones' }) // ✅ solo 1 gestión por expediente
     .limit(100000);
 
     if (!error && data) setRows(data as any);
@@ -120,36 +149,41 @@ export default function ExpedientesPage() {
   }, []);
 
   const anios = useMemo(
-    () => Array.from(new Set(rows.map(r => r.anio).filter(Boolean))).sort((a, b) => Number(b) - Number(a)),
-    [rows]
-  );
-  const etiquetas = useMemo(
-    () => Array.from(new Set(rows.map(r => r.etiqueta).filter(Boolean))).sort(),
+    () =>
+      Array.from(new Set(rows.map(r => r.anio).filter(Boolean))).sort(
+        (a, b) => Number(b) - Number(a)
+      ),
     [rows]
   );
 
   const filtered = useMemo(() => {
     const ql = q.trim().toLowerCase();
+
     return rows.filter(r => {
       if (anio && String(r.anio ?? '') !== anio) return false;
       if (etiqueta && (r.etiqueta ?? '').toLowerCase() !== etiqueta.toLowerCase()) return false;
+
+      // ✅ dependencia actual mostrada = última de historial si existe
+      const lastDep =
+        r.gestiones && r.gestiones.length
+          ? (r.gestiones[0]?.dependencia_actual ?? r.dependencia_actual ?? '')
+          : (r.dependencia_actual ?? '');
+
       if (ql) {
-        const s = `${r.expte_code} ${r.edificio ?? ''} ${r.caratula ?? ''} ${r.dependencia_actual ?? ''}`.toLowerCase();
+        const s = `${r.expte_code} ${r.edificio ?? ''} ${r.caratula ?? ''} ${lastDep}`.toLowerCase();
         if (!s.includes(ql)) return false;
       }
+
       return true;
     });
   }, [rows, q, anio, etiqueta]);
 
   const stats = useMemo(() => {
     const total = rows.length;
-    const shown = filtered.length;
     const edificios = new Set(filtered.map(r => r.edificio).filter(Boolean)).size;
-    return { total, shown, edificios };
+    return { total, edificios };
   }, [rows, filtered]);
 
-
-  //PAGINADOR
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
   const pageRows = useMemo(() => {
@@ -168,21 +202,21 @@ export default function ExpedientesPage() {
   async function updateEtiqueta(rowId: string, newEtiqueta: string | null) {
     setSavingRowId(rowId);
     setSaveRowErr(null);
-  
+
     const etiquetaValue = newEtiqueta && newEtiqueta.trim() ? newEtiqueta : null;
-  
+
     const { error } = await supabase
       .from('expedientes')
       .update({ etiqueta: etiquetaValue })
       .eq('id', rowId);
-  
+
     setSavingRowId(null);
-  
+
     if (error) {
       setSaveRowErr(error.message);
       return;
     }
-  
+
     setRows(prev =>
       prev.map(r => (r.id === rowId ? { ...r, etiqueta: etiquetaValue } : r))
     );
@@ -209,7 +243,6 @@ export default function ExpedientesPage() {
       }
     >
       <div className="space-y-4">
-        {/* Stats */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
             <div className="text-xs font-medium text-zinc-500">Total</div>
@@ -225,7 +258,6 @@ export default function ExpedientesPage() {
           </div>
         </div>
 
-        {/* Filters */}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <input
             value={q}
@@ -246,20 +278,19 @@ export default function ExpedientesPage() {
             ))}
           </select>
           <select
-              value={etiqueta}
-              onChange={e => setEtiqueta(e.target.value)}
-              className='select-arrow rounded-xl border border-zinc-200 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10'
-            >
-              <option value=''>Etiqueta (todas)</option>
-              {ETIQUETAS_OPCIONES.map(t => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            value={etiqueta}
+            onChange={e => setEtiqueta(e.target.value)}
+            className="select-arrow rounded-xl border border-zinc-200 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10"
+          >
+            <option value="">Etiqueta (todas)</option>
+            {ETIQUETAS_OPCIONES.map(t => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Table */}
         <div className="overflow-hidden rounded-2xl border border-zinc-200">
           <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
             <div className="text-sm font-medium">Planilla</div>
@@ -272,7 +303,7 @@ export default function ExpedientesPage() {
 
           <div className="overflow-auto">
             <table className="min-w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase text-zinc-500">
+              <thead className="bg-zinc-50 text-xs uppercase text-zinc-500">
                 <tr>
                   <th className="px-4 py-3">Exp.</th>
                   <th className="px-4 py-3">Año</th>
@@ -286,6 +317,7 @@ export default function ExpedientesPage() {
                   <th className="px-4 py-3">Dependencia actual</th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-zinc-100 bg-white">
                 {!loading && filtered.length === 0 ? (
                   <tr>
@@ -294,116 +326,153 @@ export default function ExpedientesPage() {
                     </td>
                   </tr>
                 ) : (
-                  pageRows.map(r => (
-                    <tr key={r.id} className="hover:bg-zinc-50">
-                      <td className="px-4 py-3 max-w-[360px] break-words">
-                        <Link href={`/expedientes/${r.id}`} className="font-semibold text-zinc-900 hover:underline">
-                          {r.expte_code}
-                        </Link>
-                      </td>
+                  pageRows.map(r => {
+                    // ✅ mostrado en tabla: última dependencia del historial
+                    const depFromHist =
+                      r.gestiones && r.gestiones.length
+                        ? r.gestiones[0]?.dependencia_actual
+                        : null;
 
-                      <td className="px-4 py-3">{r.anio ?? <span className="text-zinc-400">—</span>}</td>
+                    const shownDep = depFromHist ?? r.dependencia_actual;
 
-                      <td className="px-4 py-3">{r.edificio ?? <span className="text-zinc-400">—</span>}</td>
+                    return (
+                      <tr key={r.id} className="hover:bg-zinc-50">
+                        <td className="px-4 py-3 max-w-[360px] break-words">
+                          <Link
+                            href={`/expedientes/${r.id}`}
+                            className="font-semibold text-zinc-900 hover:underline"
+                          >
+                            {r.expte_code}
+                          </Link>
+                        </td>
 
-                      <td className="px-4 py-3 max-w-[250px] whitespace-normal break-words">
-                        <div className="text-zinc-700">{r.caratula ?? <span className="text-zinc-400">—</span>}</div>
-                      </td>
+                        <td className="px-4 py-3">
+                          {r.anio ?? <span className="text-zinc-400">—</span>}
+                        </td>
 
-                      <td className="min-w-[120px] px-4 py-3">
-                        {r.fecha_ingreso
-                          ? formatDateDMY(r.fecha_ingreso)
-                          : <span className="text-zinc-400">—</span>}
-                      </td>
+                        <td className="px-4 py-3">
+                          {r.edificio ?? <span className="text-zinc-400">—</span>}
+                        </td>
 
-                      <td className="px-4 py-3">
-                        <div className="text-zinc-700 max-w-[150px] break-words">
-                          {r.ultima_gestion
-                            ? r.ultima_gestion.length > 80
-                              ? r.ultima_gestion.slice(0, 80) + '…'
-                              : r.ultima_gestion
-                            : <span className="text-zinc-400">—</span>}
-                        </div>
-                      </td>
+                        <td className="px-4 py-3 max-w-[250px] whitespace-normal break-words">
+                          <div className="text-zinc-700">
+                            {r.caratula ?? <span className="text-zinc-400">—</span>}
+                          </div>
+                        </td>
 
-                      <td className="px-4 py-3">{r.tipo_tramite ?? <span className="text-zinc-400">—</span>}</td>
+                        <td className="min-w-[120px] px-4 py-3">
+                          {r.fecha_ingreso ? (
+                            formatDateDMY(r.fecha_ingreso)
+                          ) : (
+                            <span className="text-zinc-400">—</span>
+                          )}
+                        </td>
 
-                      <td className="px-4 py-3">
-                        <EtiquetaSelect
-                          value={r.etiqueta}
-                          options={ETIQUETAS_OPCIONES as any}
-                          className='min-w-[145px]'
-                          disabled={savingRowId === r.id}
-                          onChange={next => updateEtiqueta(r.id, next)}
-                        />
-                      </td>
+                        <td className="px-4 py-3">
+                          <div className="text-zinc-700 max-w-[150px] break-words">
+                            {r.ultima_gestion ? (
+                              r.ultima_gestion.length > 80 ? (
+                                r.ultima_gestion.slice(0, 80) + '…'
+                              ) : (
+                                r.ultima_gestion
+                              )
+                            ) : (
+                              <span className="text-zinc-400">—</span>
+                            )}
+                          </div>
+                        </td>
 
-                      <td className="px-4 py-3 uppercase">{r.resolucion ?? <span className="text-zinc-400">—</span>}</td>
+                        <td className="px-4 py-3">
+                          {r.tipo_tramite ?? <span className="text-zinc-400">—</span>}
+                        </td>
 
-                      <td className="px-4 py-3">{r.dependencia_actual ?? <span className="text-zinc-400">—</span>}</td>
-                    </tr>
-                  ))
+                        <td className="px-4 py-3">
+                          <EtiquetaSelect
+                            value={r.etiqueta}
+                            options={ETIQUETAS_OPCIONES as any}
+                            className="min-w-[145px]"
+                            disabled={savingRowId === r.id}
+                            onChange={next => updateEtiqueta(r.id, next)}
+                          />
+                        </td>
+
+                        <td className="px-4 py-3 uppercase">
+                          {r.resolucion ?? <span className="text-zinc-400">—</span>}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {shownDep ?? <span className="text-zinc-400">—</span>}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
+
           <div className="flex items-center justify-between gap-3 border-t border-zinc-200 bg-white px-4 py-3 text-xs text-zinc-600">
-          <div>
-            Página <span className="font-medium">{page}</span> de <span className="font-medium">{pageCount}</span> ·{' '}
-            {filtered.length} resultados
-          </div>
+            <div>
+              Página <span className="font-medium">{page}</span> de{' '}
+              <span className="font-medium">{pageCount}</span> · {filtered.length} resultados
+            </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 disabled:opacity-50"
-            >
-              Anterior
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 disabled:opacity-50"
+              >
+                Anterior
+              </button>
 
-            {/* números (máx 7 botones) */}
-            {Array.from({ length: pageCount }, (_, i) => i + 1)
-              .filter(n => n === 1 || n === pageCount || Math.abs(n - page) <= 2)
-              .reduce<number[]>((acc, n) => {
-                if (acc.length && n - acc[acc.length - 1] > 1) acc.push(-1);
-                acc.push(n);
-                return acc;
-              }, [])
-              .map((n, idx) =>
-                n === -1 ? (
-                  <span key={`dots-${idx}`} className="px-1 text-zinc-400">
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setPage(n)}
-                    className={
-                      'rounded-lg border px-3 py-1.5 text-xs font-medium ' +
-                      (n === page
-                        ? 'border-zinc-900 bg-zinc-900 text-white'
-                        : 'border-zinc-200 bg-white hover:bg-zinc-50')
-                    }
-                  >
-                    {n}
-                  </button>
-                )
-              )}
+              {Array.from({ length: pageCount }, (_, i) => i + 1)
+                .filter(n => n === 1 || n === pageCount || Math.abs(n - page) <= 2)
+                .reduce<number[]>((acc, n) => {
+                  if (acc.length && n - acc[acc.length - 1] > 1) acc.push(-1);
+                  acc.push(n);
+                  return acc;
+                }, [])
+                .map((n, idx) =>
+                  n === -1 ? (
+                    <span key={`dots-${idx}`} className="px-1 text-zinc-400">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setPage(n)}
+                      className={
+                        'rounded-lg border px-3 py-1.5 text-xs font-medium ' +
+                        (n === page
+                          ? 'border-zinc-900 bg-zinc-900 text-white'
+                          : 'border-zinc-200 bg-white hover:bg-zinc-50')
+                      }
+                    >
+                      {n}
+                    </button>
+                  )
+                )}
 
-            <button
-              type="button"
-              onClick={() => setPage(p => Math.min(pageCount, p + 1))}
-              disabled={page >= pageCount}
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 disabled:opacity-50"
-            >
-              Siguiente
-            </button>
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+                disabled={page >= pageCount}
+                className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 disabled:opacity-50"
+              >
+                Siguiente
+              </button>
+            </div>
           </div>
         </div>
-        </div>
+
+        {saveRowErr ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {saveRowErr}
+          </div>
+        ) : null}
       </div>
     </AppShell>
   );
