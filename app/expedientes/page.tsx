@@ -14,9 +14,11 @@ const ETIQUETAS_OPCIONES = [
 ] as const;
 
 type GestionMini = {
+  id: string;
+  created_at: string | null;
   fecha: string | null;
+  gestion: string | null;
   dependencia_actual: string | null;
-  created_at?: string | null;
 };
 
 type Expediente = {
@@ -39,7 +41,7 @@ type Expediente = {
 
   created_at: string | null;
 
-  // 👇 join con historial (gestiones)
+  // join con historial (gestiones)
   gestiones?: GestionMini[] | null;
 };
 
@@ -110,35 +112,40 @@ export default function ExpedientesPage() {
   async function load() {
     setLoading(true);
 
-    // ✅ Traemos gestiones (historial) y nos quedamos con 1 (la última) por expediente
+    // ✅ Traemos última gestión por expediente ordenada por created_at de gestiones
     const { data, error } = await supabase
-    .from('expedientes')
-    .select(`
-      id,
-      expte_code,
-      anio,
-      edificio,
-      caratula,
-      fecha_ingreso,
-      ultima_gestion,
-      se_giro_a,
-      tipo_tramite,
-      created_at,
-      etiqueta,
-      resolucion,
-      dependencia_actual,
-      gestiones:gestiones (
-        fecha,
-        dependencia_actual,
+      .from('expedientes')
+      .select(
+        `
+        id,
+        expte_code,
+        anio,
+        edificio,
+        caratula,
+        fecha_ingreso,
+        ultima_gestion,
+        se_giro_a,
+        tipo_tramite,
         created_at,
-        id
+        etiqueta,
+        resolucion,
+        dependencia_actual,
+        gestiones:gestiones (
+          id,
+          created_at,
+          fecha,
+          gestion,
+          dependencia_actual
+        )
+      `
       )
-    `)
-    .order('created_at', { ascending: false }) // expedientes
-    .order('created_at', { ascending: false, referencedTable: 'gestiones' }) // ✅ ultima por inserción
-    .order('id', { ascending: false, referencedTable: 'gestiones' }) // ✅ desempate
-    .limit(1, { referencedTable: 'gestiones' }) // ✅ solo 1 gestión por expediente
-    .limit(100000);
+      .order('created_at', { ascending: false })
+      // orden dentro del join: lo "último" real por inserción
+      .order('created_at', { ascending: false, referencedTable: 'gestiones' })
+      .order('id', { ascending: false, referencedTable: 'gestiones' })
+      // ✅ nos quedamos solo con la última gestión por expediente
+      .limit(1, { referencedTable: 'gestiones' })
+      .limit(100000);
 
     if (!error && data) setRows(data as any);
     setLoading(false);
@@ -163,11 +170,10 @@ export default function ExpedientesPage() {
       if (anio && String(r.anio ?? '') !== anio) return false;
       if (etiqueta && (r.etiqueta ?? '').toLowerCase() !== etiqueta.toLowerCase()) return false;
 
+      const lastGest = r.gestiones && r.gestiones.length ? r.gestiones[0] : null;
+
       // ✅ dependencia actual mostrada = última de historial si existe
-      const lastDep =
-        r.gestiones && r.gestiones.length
-          ? (r.gestiones[0]?.dependencia_actual ?? r.dependencia_actual ?? '')
-          : (r.dependencia_actual ?? '');
+      const lastDep = lastGest?.dependencia_actual ?? r.dependencia_actual ?? '';
 
       if (ql) {
         const s = `${r.expte_code} ${r.edificio ?? ''} ${r.caratula ?? ''} ${lastDep}`.toLowerCase();
@@ -327,13 +333,13 @@ export default function ExpedientesPage() {
                   </tr>
                 ) : (
                   pageRows.map(r => {
-                    // ✅ mostrado en tabla: última dependencia del historial
-                    const depFromHist =
-                      r.gestiones && r.gestiones.length
-                        ? r.gestiones[0]?.dependencia_actual
-                        : null;
+                    const lastGest = r.gestiones && r.gestiones.length ? r.gestiones[0] : null;
 
-                    const shownDep = depFromHist ?? r.dependencia_actual;
+                    // ✅ mostrado en tabla: última dependencia del historial
+                    const shownDep = lastGest?.dependencia_actual ?? r.dependencia_actual ?? null;
+
+                    // ✅ mostrado en tabla: última gestión del historial
+                    const shownUltimaGestion = lastGest?.gestion ?? r.ultima_gestion ?? null;
 
                     return (
                       <tr key={r.id} className="hover:bg-zinc-50">
@@ -370,11 +376,11 @@ export default function ExpedientesPage() {
 
                         <td className="px-4 py-3">
                           <div className="text-zinc-700 max-w-[150px] break-words">
-                            {r.ultima_gestion ? (
-                              r.ultima_gestion.length > 80 ? (
-                                r.ultima_gestion.slice(0, 80) + '…'
+                            {shownUltimaGestion ? (
+                              shownUltimaGestion.length > 80 ? (
+                                shownUltimaGestion.slice(0, 80) + '…'
                               ) : (
-                                r.ultima_gestion
+                                shownUltimaGestion
                               )
                             ) : (
                               <span className="text-zinc-400">—</span>

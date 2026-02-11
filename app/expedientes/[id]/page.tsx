@@ -26,6 +26,7 @@ type Expediente = {
   ultima_gestion: string | null;
   se_giro_a: string | null;
   tipo_tramite: string | null;
+
   resolucion: string | null;
   dependencia_actual: string | null;
 };
@@ -108,9 +109,10 @@ export default function ExpedienteDetailPage() {
 
   const [loading, setLoading] = useState(true);
 
-  // editables locales (se guardan en expedientes)
+  // editables (se guardan en expedientes)
   const [editEdificio, setEditEdificio] = useState('');
   const [editTramite, setEditTramite] = useState('');
+  const [editResolucion, setEditResolucion] = useState(''); // ✅
 
   // historial (inputs)
   const [hFecha, setHFecha] = useState<string>('');
@@ -127,6 +129,7 @@ export default function ExpedienteDetailPage() {
 
   const [savingEdificio, setSavingEdificio] = useState(false);
   const [savingTramite, setSavingTramite] = useState(false);
+  const [savingResolucion, setSavingResolucion] = useState(false); // ✅
 
   const [fieldErr, setFieldErr] = useState<string | null>(null);
 
@@ -165,6 +168,7 @@ export default function ExpedienteDetailPage() {
       setExp(expData as any);
       setEditEdificio(expData.edificio ?? '');
       setEditTramite(expData.tipo_tramite ?? '');
+      setEditResolucion(expData.resolucion ?? ''); // ✅
     }
 
     setGest((gData as any) ?? []);
@@ -247,6 +251,31 @@ export default function ExpedienteDetailPage() {
 
     setExp(prev => (prev ? { ...prev, tipo_tramite: tramiteValue } : prev));
     setEditTramite(tramiteValue ?? '');
+  }
+
+  // ✅ Resolución (edita y guarda en expedientes)
+  async function updateResolucion(next: string) {
+    if (!exp) return;
+
+    setSavingResolucion(true);
+    setFieldErr(null);
+
+    const resolucionValue = next && next.trim() ? next : null;
+
+    const { error } = await supabase
+      .from('expedientes')
+      .update({ resolucion: resolucionValue })
+      .eq('id', exp.id);
+
+    setSavingResolucion(false);
+
+    if (error) {
+      setFieldErr(error.message);
+      return;
+    }
+
+    setExp(prev => (prev ? { ...prev, resolucion: resolucionValue } : prev));
+    setEditResolucion(resolucionValue ?? '');
   }
 
   async function cargarHistorial() {
@@ -408,6 +437,22 @@ export default function ExpedienteDetailPage() {
           <KV k="Se giró a" v={shownSeGiroA} />
           <KV k="Dependencia actual" v={shownDepActual} />
           <KV k="Última gestión" v={shownUltimaGestion} />
+        </div>
+
+        {/* ✅ Resolución (como antes) */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-3">
+          <div className="text-xs font-medium text-zinc-500">Resolución</div>
+          <input
+            value={editResolucion}
+            placeholder="NO TIENE"
+            onChange={e => {
+              const v = e.target.value;
+              setEditResolucion(v);
+              updateResolucion(v);
+            }}
+            disabled={savingResolucion}
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-60"
+          />
         </div>
 
         {/* Cargar historial */}
