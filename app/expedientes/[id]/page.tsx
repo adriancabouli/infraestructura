@@ -62,10 +62,10 @@ function formatDateDMY(date: string | null) {
 
 function KV({ k, v }: { k: string; v: any }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-3">
-      <div className="text-xs font-medium text-zinc-500">{k}</div>
-      <div className="mt-1 text-sm text-zinc-900">
-        {v ? String(v) : <span className="text-zinc-400">—</span>}
+    <div className='rounded-xl border border-zinc-200 bg-white p-3'>
+      <div className='text-xs font-medium text-zinc-500'>{k}</div>
+      <div className='mt-1 text-sm text-zinc-900'>
+        {v ? String(v) : <span className='text-zinc-400'>—</span>}
       </div>
     </div>
   );
@@ -101,10 +101,7 @@ export default function ExpedienteDetailPage() {
 
   const [exp, setExp] = useState<Expediente | null>(null);
 
-  // lista visible del historial
   const [gest, setGest] = useState<Gestion[]>([]);
-
-  // última gestión real (por created_at) para “Dependencia actual” de arriba
   const [lastGest, setLastGest] = useState<Gestion | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -112,7 +109,11 @@ export default function ExpedienteDetailPage() {
   // editables (se guardan en expedientes)
   const [editEdificio, setEditEdificio] = useState('');
   const [editTramite, setEditTramite] = useState('');
-  const [editResolucion, setEditResolucion] = useState(''); // ✅
+
+  // ✅ Resolución: ahora es "draft" local + botón Guardar
+  const [resDraft, setResDraft] = useState('');
+  const [savingResolucion, setSavingResolucion] = useState(false);
+  const [resolucionErr, setResolucionErr] = useState<string | null>(null);
 
   // historial (inputs)
   const [hFecha, setHFecha] = useState<string>('');
@@ -129,7 +130,6 @@ export default function ExpedienteDetailPage() {
 
   const [savingEdificio, setSavingEdificio] = useState(false);
   const [savingTramite, setSavingTramite] = useState(false);
-  const [savingResolucion, setSavingResolucion] = useState(false); // ✅
 
   const [fieldErr, setFieldErr] = useState<string | null>(null);
 
@@ -148,7 +148,6 @@ export default function ExpedienteDetailPage() {
       .eq('id', id)
       .single();
 
-    // ✅ 1) lista para mostrar historial (orden humano: fecha DESC)
     const { data: gData } = await supabase
       .from('gestiones')
       .select('id, created_at, fecha, gestion, se_giro_a, dependencia_actual')
@@ -156,7 +155,6 @@ export default function ExpedienteDetailPage() {
       .order('fecha', { ascending: false })
       .order('created_at', { ascending: false });
 
-    // ✅ 2) última carga real (created_at DESC) para “Dependencia actual” arriba
     const { data: lastData } = await supabase
       .from('gestiones')
       .select('id, created_at, fecha, gestion, se_giro_a, dependencia_actual')
@@ -168,7 +166,7 @@ export default function ExpedienteDetailPage() {
       setExp(expData as any);
       setEditEdificio(expData.edificio ?? '');
       setEditTramite(expData.tipo_tramite ?? '');
-      setEditResolucion(expData.resolucion ?? ''); // ✅
+      setResDraft(expData.resolucion ?? ''); // ✅ set draft
     }
 
     setGest((gData as any) ?? []);
@@ -253,14 +251,14 @@ export default function ExpedienteDetailPage() {
     setEditTramite(tramiteValue ?? '');
   }
 
-  // ✅ Resolución (edita y guarda en expedientes)
-  async function updateResolucion(next: string) {
+  // ✅ guardar resolución SOLO al click
+  async function saveResolucion() {
     if (!exp) return;
 
     setSavingResolucion(true);
-    setFieldErr(null);
+    setResolucionErr(null);
 
-    const resolucionValue = next && next.trim() ? next : null;
+    const resolucionValue = resDraft && resDraft.trim() ? resDraft.trim() : null;
 
     const { error } = await supabase
       .from('expedientes')
@@ -270,12 +268,11 @@ export default function ExpedienteDetailPage() {
     setSavingResolucion(false);
 
     if (error) {
-      setFieldErr(error.message);
+      setResolucionErr(error.message);
       return;
     }
 
     setExp(prev => (prev ? { ...prev, resolucion: resolucionValue } : prev));
-    setEditResolucion(resolucionValue ?? '');
   }
 
   async function cargarHistorial() {
@@ -320,43 +317,44 @@ export default function ExpedienteDetailPage() {
 
   if (loading) {
     return (
-      <AppShell title="Expediente">
-        <div className="text-sm text-zinc-500">Cargando…</div>
+      <AppShell title='Expediente'>
+        <div className='text-sm text-zinc-500'>Cargando…</div>
       </AppShell>
     );
   }
 
   if (!exp) {
     return (
-      <AppShell title="Expediente">
-        <div className="text-sm text-zinc-500">No encontrado.</div>
+      <AppShell title='Expediente'>
+        <div className='text-sm text-zinc-500'>No encontrado.</div>
       </AppShell>
     );
   }
 
-  // ✅ arriba: usar última carga REAL (created_at)
   const shownUltimaGestion = lastGest?.gestion ?? exp.ultima_gestion;
   const shownSeGiroA = lastGest?.se_giro_a ?? exp.se_giro_a;
   const shownDepActual = lastGest?.dependencia_actual ?? exp.dependencia_actual;
+
+  const resolucionDirty = (resDraft ?? '') !== (exp.resolucion ?? '');
 
   return (
     <AppShell
       title={`Expediente ${exp.expte_code}`}
       right={
         <Link
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium hover:bg-zinc-50"
-          href="/expedientes"
+          className='rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium hover:bg-zinc-50'
+          href='/expedientes'
         >
           Volver
         </Link>
       }
     >
-      <div className="space-y-6">
+      <div className='space-y-6'>
         {/* Bloque superior */}
-        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className='rounded-2xl border border-zinc-200 bg-zinc-50 p-4'>
+          <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
             <div>
-              <div className="text-xs font-medium text-zinc-500">Edificio</div>
+              <div className='text-xs font-medium text-zinc-500'>Edificio</div>
               <select
                 value={editEdificio}
                 onChange={e => {
@@ -365,9 +363,9 @@ export default function ExpedienteDetailPage() {
                   updateEdificio(v);
                 }}
                 disabled={savingEdificio}
-                className="margin-top-5 select-arrow mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-60"
+                className='margin-top-5 select-arrow mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-60'
               >
-                <option value="">Seleccionar…</option>
+                <option value=''>Seleccionar…</option>
                 {EDIFICIOS.map(x => (
                   <option key={x} value={x}>
                     {x}
@@ -377,44 +375,42 @@ export default function ExpedienteDetailPage() {
             </div>
 
             <div>
-              <div className="text-xs font-medium text-zinc-500">Fecha de ingreso</div>
-              <div className="margin-top-5 mt-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900">
-                {exp.fecha_ingreso ? formatDateDMY(exp.fecha_ingreso) : <span className="text-zinc-400">—</span>}
+              <div className='text-xs font-medium text-zinc-500'>Fecha de ingreso</div>
+              <div className='margin-top-5 mt-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900'>
+                {exp.fecha_ingreso ? formatDateDMY(exp.fecha_ingreso) : <span className='text-zinc-400'>—</span>}
               </div>
             </div>
           </div>
 
-          <div className="mt-4 text-xs font-medium text-zinc-500">Carátula/Referencia</div>
-          <div className="mt-2 text-sm text-zinc-700">{exp.caratula ?? ''}</div>
+          <div className='mt-4 text-xs font-medium text-zinc-500'>Carátula/Referencia</div>
+          <div className='mt-2 text-sm text-zinc-700'>{exp.caratula ?? ''}</div>
         </div>
 
         {/* Datos */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <KV k="Año" v={exp.anio} />
+        <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
+          <KV k='Año' v={exp.anio} />
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-xs font-medium text-zinc-500">Etiqueta</div>
-              {savingEtiqueta ? <div className="text-[11px] text-zinc-400">Guardando…</div> : null}
+          <div className='rounded-xl border border-zinc-200 bg-white p-3'>
+            <div className='flex items-center justify-between gap-2'>
+              <div className='text-xs font-medium text-zinc-500'>Etiqueta</div>
+              {savingEtiqueta ? <div className='text-[11px] text-zinc-400'>Guardando…</div> : null}
             </div>
 
-            <div className="mt-2">
+            <div className='mt-2'>
               <EtiquetaSelect
                 value={exp.etiqueta}
                 options={ETIQUETAS_OPCIONES as any}
                 disabled={savingEtiqueta}
-                className="w-full"
+                className='w-full'
                 onChange={next => updateEtiqueta(next)}
               />
             </div>
 
-            {etiquetaErr ? (
-              <div className="mt-2 text-xs text-red-600">{etiquetaErr}</div>
-            ) : null}
+            {etiquetaErr ? <div className='mt-2 text-xs text-red-600'>{etiquetaErr}</div> : null}
           </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-3">
-            <div className="text-xs font-medium text-zinc-500">Tipo trámite</div>
+          <div className='rounded-xl border border-zinc-200 bg-white p-3'>
+            <div className='text-xs font-medium text-zinc-500'>Tipo trámite</div>
             <select
               value={editTramite}
               onChange={e => {
@@ -423,9 +419,9 @@ export default function ExpedienteDetailPage() {
                 updateTramite(v);
               }}
               disabled={savingTramite}
-              className="select-arrow mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-60"
+              className='select-arrow mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-60'
             >
-              <option value="">Seleccionar…</option>
+              <option value=''>Seleccionar…</option>
               {TRAMITES.map(x => (
                 <option key={x} value={x}>
                   {x}
@@ -434,114 +430,124 @@ export default function ExpedienteDetailPage() {
             </select>
           </div>
 
-          <KV k="Se giró a" v={shownSeGiroA} />
-          <KV k="Dependencia actual" v={shownDepActual} />
-          <KV k="Última gestión" v={shownUltimaGestion} />
+          <KV k='Se giró a' v={shownSeGiroA} />
+          <KV k='Dependencia actual' v={shownDepActual} />
+          <KV k='Última gestión' v={shownUltimaGestion} />
         </div>
 
-        {/* ✅ Resolución (como antes) */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-3">
-          <div className="text-xs font-medium text-zinc-500">Resolución</div>
-          <input
-            value={editResolucion}
-            placeholder="NO TIENE"
-            onChange={e => {
-              const v = e.target.value;
-              setEditResolucion(v);
-              updateResolucion(v);
-            }}
-            disabled={savingResolucion}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-60"
-          />
+        {/* ✅ Resolución con botón Guardar */}
+        <div className='rounded-xl border border-zinc-200 bg-white p-3'>
+          <div className='flex items-center justify-between gap-2'>
+            <div className='text-xs font-medium text-zinc-500'>Resolución</div>
+            {savingResolucion ? <div className='text-[11px] text-zinc-400'>Guardando…</div> : null}
+          </div>
+
+          <div className='mt-2 flex items-center gap-2'>
+            <input
+              value={resDraft}
+              placeholder='NO TIENE'
+              onChange={e => setResDraft(e.target.value)}
+              className='w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10'
+            />
+
+            <button
+              type='button'
+              onClick={saveResolucion}
+              disabled={savingResolucion || !resolucionDirty}
+              className='shrink-0 rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60'
+            >
+              Guardar
+            </button>
+          </div>
+
+          {resolucionErr ? <div className='mt-2 text-xs text-red-600'>{resolucionErr}</div> : null}
         </div>
 
         {/* Cargar historial */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-          <div className="mb-3">
-            <div className="text-xs font-medium text-zinc-500">Agregar movimiento</div>
-            <div className="text-sm font-semibold">Cargar historial</div>
+        <div className='rounded-2xl border border-zinc-200 bg-white p-4'>
+          <div className='mb-3'>
+            <div className='text-xs font-medium text-zinc-500'>Agregar movimiento</div>
+            <div className='text-sm font-semibold'>Cargar historial</div>
           </div>
 
           {histErr ? (
-            <div className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {histErr}
-            </div>
+            <div className='mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700'>{histErr}</div>
           ) : null}
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
             <div>
-              <label className="text-xs font-medium text-zinc-600">Fecha</label>
+              <label className='text-xs font-medium text-zinc-600'>Fecha</label>
               <input
-                type="date"
+                type='date'
                 value={hFecha}
                 onChange={e => setHFecha(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10"
+                className='mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10'
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className="text-xs font-medium text-zinc-600">Última gestión</label>
+            <div className='md:col-span-2'>
+              <label className='text-xs font-medium text-zinc-600'>Última gestión</label>
               <input
                 value={hGestion}
                 onChange={e => setHGestion(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10"
-                placeholder="Detalle de la gestión…"
+                className='mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10'
+                placeholder='Detalle de la gestión…'
               />
             </div>
 
             <div>
-              <label className="text-xs font-medium text-zinc-600">Se giró a</label>
+              <label className='text-xs font-medium text-zinc-600'>Se giró a</label>
               <input
                 value={hSeGiroA}
                 onChange={e => setHSeGiroA(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10"
+                className='mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10'
               />
             </div>
 
             <div>
-              <label className="text-xs font-medium text-zinc-600">Dependencia actual</label>
+              <label className='text-xs font-medium text-zinc-600'>Dependencia actual</label>
               <input
                 value={hDepActual}
                 onChange={e => setHDepActual(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10"
+                className='mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10'
               />
             </div>
           </div>
 
-          <div className="mt-4 flex justify-end">
+          <div className='mt-4 flex justify-end'>
             <button
-              type="button"
+              type='button'
               onClick={cargarHistorial}
               disabled={savingHist}
-              className="rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
+              className='rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60'
             >
               {savingHist ? 'Cargando…' : 'Cargar historial'}
             </button>
           </div>
         </div>
 
-        {fieldErr ? <div className="text-xs text-red-600">{fieldErr}</div> : null}
+        {fieldErr ? <div className='text-xs text-red-600'>{fieldErr}</div> : null}
 
         {/* Historial */}
         <div>
-          <div className="mb-2 flex items-baseline justify-between">
-            <h2 className="text-base font-semibold">Registro histórico</h2>
-            <div className="text-xs text-zinc-500">{gest.length} registros</div>
+          <div className='mb-2 flex items-baseline justify-between'>
+            <h2 className='text-base font-semibold'>Registro histórico</h2>
+            <div className='text-xs text-zinc-500'>{gest.length} registros</div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-4 bg-soft-gray">
+          <div className='rounded-2xl border border-zinc-200 bg-white p-4 bg-soft-gray'>
             {gest.length === 0 ? (
-              <div className="text-sm text-zinc-500">Sin movimientos.</div>
+              <div className='text-sm text-zinc-500'>Sin movimientos.</div>
             ) : (
-              <ol className="space-y-4">
+              <ol className='space-y-4'>
                 {gest.map(g => (
-                  <li key={g.id} className="relative pl-6">
-                    <span className="absolute left-0 top-1.5 h-2 w-2 rounded-full bg-zinc-900" />
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="text-sm font-medium max-w-[1100px]">{g.gestion ?? '—'}</div>
-                      <div className="text-xs text-zinc-500">{formatDateDMY(g.fecha)}</div>
+                  <li key={g.id} className='relative pl-6'>
+                    <span className='absolute left-0 top-1.5 h-2 w-2 rounded-full bg-zinc-900' />
+                    <div className='flex items-start justify-between gap-3'>
+                      <div className='text-sm font-medium max-w-[1100px]'>{g.gestion ?? '—'}</div>
+                      <div className='text-xs text-zinc-500'>{formatDateDMY(g.fecha)}</div>
                     </div>
-                    <div className="mt-1 text-xs text-zinc-600">
+                    <div className='mt-1 text-xs text-zinc-600'>
                       {g.se_giro_a ? `Se giró a: ${g.se_giro_a}` : null}
                       {g.se_giro_a && g.dependencia_actual ? ' · ' : null}
                       {g.dependencia_actual ? `Dep. actual: ${g.dependencia_actual}` : null}
