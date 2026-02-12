@@ -337,6 +337,69 @@ export default function ExpedienteDetailPage() {
     await load();
   }
 
+  function imprimirHistorial() {
+    if (!exp) return;
+  
+    const historialHtml = (gest ?? [])
+      .map(
+        g => `
+          <div class="item">
+            <div class="fecha">${formatDateDMY(g.fecha)}</div>
+            <div class="gestion">${g.gestion ?? '—'}</div>
+            <div class="extra">
+              ${g.se_giro_a ? 'Se giró a: ' + g.se_giro_a : ''}
+              ${g.se_giro_a && g.dependencia_actual ? ' · ' : ''}
+              ${g.dependencia_actual ? 'Dep. actual: ' + g.dependencia_actual : ''}
+            </div>
+            ${g.last_user_update ? `<div class="user">Usuario: ${g.last_user_update}</div>` : ''}
+          </div>
+        `
+      )
+      .join('');
+  
+    const html = `
+    <html>
+      <head>
+        <title>Registro histórico - Expediente ${exp.expte_code ?? ''}</title>
+        <meta charset="utf-8" />
+        <style>
+          body { font-family: Arial, sans-serif; padding: 24px; }
+          h1 { font-size: 18px; margin: 0 0 12px;color:#005e9a }
+          .meta { font-size: 12px; color: #555; margin-bottom: 40px; border-bottom: 1px solid #eee;padding-bottom:10px;}
+  
+          .item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #eee;}
+          .fecha { font-size: 12px; color: #666; margin-top:10px;margin-bottom:10px }
+          .gestion { font-size: 14px; font-weight: 600; margin: 4px 0; }
+          .extra { font-size: 12px; color: #444; }
+          .user { font-size: 11px; color: #777; margin-top: 4px; }
+        </style>
+      </head>
+      <body>
+        <h1>Registro histórico - Expediente ${exp.expte_code ?? ''}</h1>
+  
+        <div class="meta">
+          Carátula: ${exp.caratula ?? ''}<br/>
+          Edificio: ${exp.edificio ?? ''}<br/>
+          Año: ${exp.anio ?? ''}
+        </div>
+  
+        ${historialHtml}
+  
+        <script>
+          window.onload = function() { window.print(); window.close(); };
+        </script>
+      </body>
+    </html>
+    `;
+  
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) return;
+  
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
   if (loading) {
     return (
       <AppShell title='Expediente'>
@@ -564,12 +627,23 @@ export default function ExpedienteDetailPage() {
 
         {/* Historial */}
         <div>
-          <div className='mb-2 flex items-baseline justify-between'>
+          <div className='mb-2 flex items-center justify-between gap-3'>
             <h2 className='text-base font-semibold'>Registro histórico</h2>
-            <div className='text-xs text-zinc-500'>{gest.length} registros</div>
+
+            <div className='flex items-center gap-2'>
+              <div className='text-xs text-zinc-500'>{gest.length} registros</div>
+
+              <button
+                type='button'
+                onClick={imprimirHistorial}
+                className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50'
+              >
+                Imprimir
+              </button>
+            </div>
           </div>
 
-          <div className='rounded-2xl border border-zinc-200 bg-white p-4 bg-soft-gray'>
+          <div id='print-historial' className='rounded-2xl border border-zinc-200 bg-white p-4 bg-soft-gray'>
             {gest.length === 0 ? (
               <div className='text-sm text-zinc-500'>Sin movimientos.</div>
             ) : (
