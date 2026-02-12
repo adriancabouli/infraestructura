@@ -13,6 +13,8 @@ const ETIQUETAS_OPCIONES = [
   'PENDIENTE RESOLVER',
 ] as const;
 
+const TRAMITES_OPCIONES = ['PE', 'CD', 'LP', 'OTROS'] as const;
+
 type GestionMini = {
   id: string;
   created_at: string | null;
@@ -80,13 +82,14 @@ export default function ExpedientesPage() {
   const [q, setQ] = useState('');
   const [anio, setAnio] = useState('');
   const [etiqueta, setEtiqueta] = useState('');
+  const [tramite, setTramite] = useState('');
 
   const PAGE_SIZE = 50;
   const [page, setPage] = useState(1);
 
   useEffect(() => {
     setPage(1);
-  }, [q, anio, etiqueta]);
+  }, [q, anio, etiqueta, tramite]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -154,7 +157,11 @@ export default function ExpedientesPage() {
     return rows.filter(r => {
       if (anio && String(r.anio ?? '') !== anio) return false;
       if (etiqueta && (r.etiqueta ?? '').toLowerCase() !== etiqueta.toLowerCase()) return false;
-
+      if (
+        tramite &&
+        (r.tipo_tramite ?? '').trim().toUpperCase() !== tramite.trim().toUpperCase()
+      )
+        return false;
       const lastGest = r.gestiones && r.gestiones.length ? r.gestiones[0] : null;
 
       // ✅ dependencia actual mostrada = última de historial si existe
@@ -167,7 +174,7 @@ export default function ExpedientesPage() {
 
       return true;
     });
-  }, [rows, q, anio, etiqueta]);
+  }, [rows, q, anio, etiqueta, tramite]);
 
   const stats = useMemo(() => {
     const total = rows.length;
@@ -249,13 +256,25 @@ export default function ExpedientesPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="Buscar por expte / edificio / carátula / dependencia…"
             className="rounded-xl border border-zinc-200 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 md:col-span-2"
           />
+          <select
+              value={tramite}
+              onChange={e => setTramite(e.target.value)}
+              className="select-arrow rounded-xl border border-zinc-200 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10"
+            >
+              <option value="">Trámite (todos)</option>
+              {TRAMITES_OPCIONES.map(t => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+          </select>          
           <select
             value={anio}
             onChange={e => setAnio(e.target.value)}
@@ -305,6 +324,7 @@ export default function ExpedientesPage() {
                   <th className="px-4 py-3">Trámite</th>
                   <th className="px-4 py-3">Etiqueta</th>
                   <th className="px-4 py-3">Resol.</th>
+                  <th className="px-4 py-3">Fecha de giro</th>
                   <th className="px-4 py-3">Dependencia actual</th>
                 </tr>
               </thead>
@@ -312,7 +332,7 @@ export default function ExpedientesPage() {
               <tbody className="divide-y divide-zinc-100 bg-white">
                 {!loading && filtered.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-6 text-zinc-500" colSpan={11}>
+                    <td className="px-4 py-6 text-zinc-500" colSpan={12}>
                       Sin resultados.
                     </td>
                   </tr>
@@ -325,6 +345,7 @@ export default function ExpedientesPage() {
 
                     // ✅ mostrado en tabla: última gestión del historial
                     const shownUltimaGestion = lastGest?.gestion ?? r.ultima_gestion ?? null;
+                    const shownFechaGiro = lastGest?.fecha ?? null;
 
                     return (
                       <tr key={r.id} className="hover:bg-zinc-50">
@@ -345,7 +366,7 @@ export default function ExpedientesPage() {
                           {r.edificio ?? <span className="text-zinc-400">—</span>}
                         </td>
 
-                        <td className="px-4 py-3 max-w-[250px] whitespace-normal break-words">
+                        <td className="px-4 py-3 max-w-[210px] whitespace-normal break-words">
                           <div className="text-zinc-700">
                             {r.caratula ?? <span className="text-zinc-400">—</span>}
                           </div>
@@ -381,7 +402,7 @@ export default function ExpedientesPage() {
                           <EtiquetaSelect
                             value={r.etiqueta}
                             options={ETIQUETAS_OPCIONES as any}
-                            className="min-w-[145px]"
+                            className="min-w-[120px] w-[120px]"
                             disabled={savingRowId === r.id}
                             onChange={next => updateEtiqueta(r.id, next)}
                           />
@@ -390,8 +411,16 @@ export default function ExpedientesPage() {
                         <td className="px-4 py-3 uppercase">
                           {r.resolucion ?? <span className="text-zinc-400">—</span>}
                         </td>
+                
+                        <td className="px-4 py-3 min-w-[120px]">
+                          {shownFechaGiro ? (
+                            formatDateDMY(shownFechaGiro)
+                          ) : (
+                            <span className="text-zinc-400">—</span>
+                          )}
+                        </td>
 
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 w-[80px] max-w-[80px] break-words whitespace-normal">
                           {shownDep ?? <span className="text-zinc-400">—</span>}
                         </td>
                       </tr>
