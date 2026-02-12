@@ -343,7 +343,7 @@ export default function ExpedientesPage() {
 
                     return (
                       <tr key={r.id} className="hover:bg-zinc-50">
-                        <td className="px-4 py-3 max-w-[360px] break-words">
+                        <td className="px-4 py-3 w-[120px] break-words">
                           <Link
                             href={`/expedientes/${r.id}`}
                             className="font-semibold text-zinc-900 hover:underline"
