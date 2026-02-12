@@ -72,21 +72,6 @@ function formatDateDMY(date: string | null) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-function Badge({ value }: { value: string }) {
-  const v = normalize(value);
-
-  const cls =
-    v.includes('PENDIENTE')
-      ? 'badge badge-pendiente'
-      : v.includes('TRAMITE')
-      ? 'badge badge-tramite'
-      : v.includes('FINALIZO')
-      ? 'badge badge-finalizado'
-      : 'badge bg-zinc-100 text-zinc-700';
-
-  return <span className={cls}>{value}</span>;
-}
-
 export default function ExpedientesPage() {
   const router = useRouter();
   const [rows, setRows] = useState<Expediente[]>([]);

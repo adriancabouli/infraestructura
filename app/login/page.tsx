@@ -108,7 +108,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
           >
-            {loading ? 'Entrando…' : 'Entrar'}
+            {loading ? 'Ingresando...' : 'Ingresar al sistema'}
           </button>
         </form>
       </div>
