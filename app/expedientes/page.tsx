@@ -127,6 +127,7 @@ export default function ExpedientesPage() {
         )
       `
       )
+      .or('activo.eq.true,activo.is.null')
       .order('created_at', { ascending: false })
       // orden dentro del join: lo "último" real por inserción
       .order('created_at', { ascending: false, referencedTable: 'gestiones' })
@@ -196,6 +197,32 @@ export default function ExpedientesPage() {
 
   const [savingRowId, setSavingRowId] = useState<string | null>(null);
   const [saveRowErr, setSaveRowErr] = useState<string | null>(null);
+  const [deleteRowId, setDeleteRowId] = useState<string | null>(null);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const [deleteOk, setDeleteOk] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  async function eliminarExpediente(id: string) {
+    setDeleteRowId(id);
+    setDeleteErr(null);
+    setDeleteOk(null);
+
+    const { error } = await supabase
+      .from('expedientes')
+      .update({ activo: false })
+      .eq('id', id);
+
+    setDeleteRowId(null);
+
+    if (error) {
+      setDeleteErr(error.message);
+      return;
+    }
+
+    setRows(prev => prev.filter(r => r.id !== id));
+    setDeleteOk('Expediente eliminado (oculto).');
+    setTimeout(() => setDeleteOk(null), 2500);
+  }
 
   async function updateEtiqueta(rowId: string, newEtiqueta: string | null) {
     setSavingRowId(rowId);
@@ -301,7 +328,60 @@ export default function ExpedientesPage() {
           </select>
         </div>
 
+        {confirmDeleteId ? (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+              <div className="text-base font-semibold text-zinc-900">Eliminar expediente</div>
+              <div className="mt-2 text-sm text-zinc-600">
+                Esto lo va a ocultar del sistema. Podés volver a activarlo si después lo necesitás.
+              </div>
+
+              {deleteErr ? (
+                <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {deleteErr}
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteId(null)}
+                  disabled={deleteRowId === confirmDeleteId}
+                  className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const id = confirmDeleteId;
+                    setConfirmDeleteId(null);
+                    if (id) await eliminarExpediente(id);
+                  }}
+                  disabled={deleteRowId === confirmDeleteId}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                >
+                  Confirmar eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div className="overflow-hidden rounded-2xl border border-zinc-200">
+
+         {deleteErr ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {deleteErr}
+            </div>
+          ) : null}
+
+          {deleteOk ? (
+            <div className="eliminado-ok border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+              {deleteOk}
+            </div>
+          ) : null}
           <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
             <div className="text-sm font-medium">Planilla</div>
             {loading ? (
@@ -326,13 +406,14 @@ export default function ExpedientesPage() {
                   <th className="px-4 py-3">Resol.</th>
                   <th className="px-4 py-3">Fecha de giro</th>
                   <th className="px-4 py-3">Dependencia actual</th>
+                  <th className="px-4 py-3 w-[80px]"></th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-zinc-100 bg-white">
                 {!loading && filtered.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-6 text-zinc-500" colSpan={12}>
+                    <td className="px-4 py-6 text-zinc-500" colSpan={13}>
                       Sin resultados.
                     </td>
                   </tr>
@@ -423,6 +504,18 @@ export default function ExpedientesPage() {
                         <td className="px-4 py-3 w-[80px] max-w-[80px] break-words whitespace-normal">
                           {shownDep ?? <span className="text-zinc-400">—</span>}
                         </td>
+
+                        <td className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(r.id)}
+                              disabled={deleteRowId === r.id}
+                              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60 active:scale-[0.97]"
+                            >
+                              {deleteRowId === r.id ? 'Eliminando…' : 'Eliminar'}
+                            </button>
+                        </td>
+
                       </tr>
                     );
                   })

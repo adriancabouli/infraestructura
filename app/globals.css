@@ -63,7 +63,8 @@
   .shadow-login{ --tw-shadow: 0 1px 1px #0000000a, 0 16px 40px -12px #0000004f;  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);}
   .cargando-login{color:#fff}
   .ultimo-movimiento-usuario{background: #f6f6f6;} 
-
+  .eliminado-ok {position: relative;top: -1px;left: -1px;width: calc(100% + 4px);padding-left: 15px;}
+  
   li.relative.pl-6 { border-bottom: 1px solid #e6e6e6; padding-bottom: 17px;}
   li.relative.pl-6:last-child { border-bottom: 0px solid #e6e6e6; padding-bottom: 0px;}
 

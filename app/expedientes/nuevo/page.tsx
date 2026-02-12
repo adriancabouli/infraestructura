@@ -60,6 +60,7 @@ export default function NuevoExpedientePage() {
     const { data, error } = await supabase
       .from('expedientes')
       .insert({
+        activo: true,
         expte_code: expteCode.trim() || null,
         anio: anioNum,
         fecha_ingreso: fechaIngreso ? fechaIngreso : null,
