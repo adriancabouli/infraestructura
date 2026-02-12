@@ -61,17 +61,17 @@ export default function LoginPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen grid place-items-center px-4">
-        <div className="text-sm text-zinc-500">Cargando…</div>
+      <div className="min-h-screen grid place-items-center px-4 main-login">
+        <div className="text-sm text-zinc-500 cargando-login">Cargando…</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen grid place-items-center px-4">
-      <div className="w-full max-w-[420px] rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+    <div className="min-h-screen grid place-items-center px-4 main-login">
+      <div className="w-full max-w-[420px] rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm shadow-login">
         <div className="mb-5">
-          <div className="text-xs font-medium text-zinc-500 margin-bottom-10">Control de Expedientes - Infraestructura</div>
+          <div className="text-xs font-medium text-zinc-500 margin-bottom-10 login-head">Control de Expedientes - Infraestructura</div>
           <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
         </div>
 

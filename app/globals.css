@@ -54,7 +54,15 @@
   .name {font-size: 13px!important;  border-bottom: 1px solid #e4e4e7;padding-bottom: 14px}
   .uppercase{text-transform: uppercase!important;}
 
+   /*LOGIN*/
+  .main-login{background: #015f9b!important;}
+  .login-head{color: #015f9b;}
+  .shadow-login{ --tw-shadow: 0 1px 1px #0000000a, 0 16px 40px -12px #0000004f;  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);}
+  .cargando-login{color:#fff}
+
   li.relative.pl-6 { border-bottom: 1px solid #e6e6e6; padding-bottom: 17px;}
+  li.relative.pl-6:last-child { border-bottom: 0px solid #e6e6e6; padding-bottom: 0px;}
+  
   .historial-element{ background: #015f9b;} 
   .fecha-historial{   color: #015f9b; font-size: 12px !important; font-weight: 600;} 
 
