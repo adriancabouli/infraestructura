@@ -48,7 +48,7 @@ function formatDateDMY(date: string | null) {
     const yyyy = m[1];
     const mm = m[2];
     const dd = m[3];
-    return `${dd}-${mm}-${yyyy}`;
+    return `${dd}/${mm}/${yyyy}`;
   }
 
   const d = new Date(date);
@@ -57,7 +57,7 @@ function formatDateDMY(date: string | null) {
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const yyyy = d.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
+  return `${dd}/${mm}/${yyyy}`;
 }
 
 function KV({ k, v }: { k: string; v: any }) {
@@ -545,7 +545,7 @@ export default function ExpedienteDetailPage() {
                     <span className='historial-element absolute left-0 top-1.5 h-2 w-2 rounded-full bg-zinc-900' />
                     <div className='flex items-start justify-between gap-3'>
                       <div className='text-sm font-medium max-w-[1100px]'>{g.gestion ?? '—'}</div>
-                      <div className='text-xs text-zinc-500'>{formatDateDMY(g.fecha)}</div>
+                      <div className='text-xs text-zinc-500 fecha-historial'>{formatDateDMY(g.fecha)}</div>
                     </div>
                     <div className='mt-1 text-xs text-zinc-600'>
                       {g.se_giro_a ? `Se giró a: ${g.se_giro_a}` : null}

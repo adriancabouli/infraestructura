@@ -60,7 +60,7 @@ function formatDateDMY(date: string | null) {
     const yyyy = m[1];
     const mm = m[2];
     const dd = m[3];
-    return `${dd}-${mm}-${yyyy}`;
+    return `${dd}/${mm}/${yyyy}`;
   }
 
   const d = new Date(date);
@@ -69,7 +69,7 @@ function formatDateDMY(date: string | null) {
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const yyyy = d.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
+  return `${dd}/${mm}/${yyyy}`;
 }
 
 function Badge({ value }: { value: string }) {
