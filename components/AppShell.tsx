@@ -28,14 +28,15 @@ function NavItem({ href, label }: { href: string; label: string }) {
 }
 
 export default function AppShell({
-  title,
-  right,
-  children,
-}: {
-  title: string;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-}) {
+    title,
+    right,
+    children,
+  }: {
+    title: string;
+    right?: React.ReactNode;
+    children: React.ReactNode;
+  }) {
+    
   const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {

@@ -29,6 +29,7 @@ type Expediente = {
 
   resolucion: string | null;
   dependencia_actual: string | null;
+  last_user_update: string | null;
 };
 
 type Gestion = {
@@ -38,6 +39,7 @@ type Gestion = {
   gestion: string | null;
   se_giro_a: string | null;
   dependencia_actual: string | null;
+  last_user_update: string | null;
 };
 
 function formatDateDMY(date: string | null) {
@@ -105,6 +107,7 @@ export default function ExpedienteDetailPage() {
   const [lastGest, setLastGest] = useState<Gestion | null>(null);
 
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string>('');
 
   // editables (se guardan en expedientes)
   const [editEdificio, setEditEdificio] = useState('');
@@ -135,7 +138,12 @@ export default function ExpedienteDetailPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.push('/login');
+      const session = data.session;
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+      setUserEmail(session.user.email ?? '');
     });
   }, [router]);
 
@@ -150,14 +158,14 @@ export default function ExpedienteDetailPage() {
 
     const { data: gData } = await supabase
       .from('gestiones')
-      .select('id, created_at, fecha, gestion, se_giro_a, dependencia_actual')
+      .select('id, created_at, fecha, gestion, se_giro_a, dependencia_actual, last_user_update')
       .eq('expediente_id', id)
       .order('fecha', { ascending: false })
       .order('created_at', { ascending: false });
 
     const { data: lastData } = await supabase
       .from('gestiones')
-      .select('id, created_at, fecha, gestion, se_giro_a, dependencia_actual')
+      .select('id, created_at, fecha, gestion, se_giro_a, dependencia_actual, last_user_update')
       .eq('expediente_id', id)
       .order('created_at', { ascending: false })
       .limit(1);
@@ -190,7 +198,7 @@ export default function ExpedienteDetailPage() {
 
     const { error } = await supabase
       .from('expedientes')
-      .update({ etiqueta: etiquetaValue })
+      .update({ etiqueta: etiquetaValue, last_user_update: userEmail || null })
       .eq('id', exp.id);
 
     setSavingEtiqueta(false);
@@ -200,7 +208,9 @@ export default function ExpedienteDetailPage() {
       return;
     }
 
-    setExp(prev => (prev ? { ...prev, etiqueta: etiquetaValue } : prev));
+    setExp(prev =>
+      prev ? { ...prev, etiqueta: etiquetaValue, last_user_update: userEmail || null } : prev
+    );
   }
 
   async function updateEdificio(next: string) {
@@ -213,7 +223,7 @@ export default function ExpedienteDetailPage() {
 
     const { error } = await supabase
       .from('expedientes')
-      .update({ edificio: edificioValue })
+      .update({ edificio: edificioValue, last_user_update: userEmail || null })
       .eq('id', exp.id);
 
     setSavingEdificio(false);
@@ -223,7 +233,9 @@ export default function ExpedienteDetailPage() {
       return;
     }
 
-    setExp(prev => (prev ? { ...prev, edificio: edificioValue } : prev));
+    setExp(prev =>
+      prev ? { ...prev, edificio: edificioValue, last_user_update: userEmail || null } : prev
+    );
     setEditEdificio(edificioValue ?? '');
   }
 
@@ -237,7 +249,7 @@ export default function ExpedienteDetailPage() {
 
     const { error } = await supabase
       .from('expedientes')
-      .update({ tipo_tramite: tramiteValue })
+      .update({ tipo_tramite: tramiteValue, last_user_update: userEmail || null })
       .eq('id', exp.id);
 
     setSavingTramite(false);
@@ -247,7 +259,9 @@ export default function ExpedienteDetailPage() {
       return;
     }
 
-    setExp(prev => (prev ? { ...prev, tipo_tramite: tramiteValue } : prev));
+    setExp(prev =>
+      prev ? { ...prev, tipo_tramite: tramiteValue, last_user_update: userEmail || null } : prev
+    );
     setEditTramite(tramiteValue ?? '');
   }
 
@@ -262,7 +276,7 @@ export default function ExpedienteDetailPage() {
 
     const { error } = await supabase
       .from('expedientes')
-      .update({ resolucion: resolucionValue })
+      .update({ resolucion: resolucionValue, last_user_update: userEmail || null })
       .eq('id', exp.id);
 
     setSavingResolucion(false);
@@ -272,7 +286,9 @@ export default function ExpedienteDetailPage() {
       return;
     }
 
-    setExp(prev => (prev ? { ...prev, resolucion: resolucionValue } : prev));
+    setExp(prev =>
+      prev ? { ...prev, resolucion: resolucionValue, last_user_update: userEmail || null } : prev
+    );
   }
 
   async function cargarHistorial() {
@@ -298,6 +314,7 @@ export default function ExpedienteDetailPage() {
       gestion: hGestion.trim(),
       se_giro_a: hSeGiroA.trim() || null,
       dependencia_actual: hDepActual.trim() || null,
+      last_user_update: userEmail || null,
     });
 
     setSavingHist(false);
@@ -312,6 +329,11 @@ export default function ExpedienteDetailPage() {
     setHSeGiroA('');
     setHDepActual('');
 
+    await supabase
+      .from('expedientes')
+      .update({ last_user_update: userEmail || null })
+      .eq('id', exp.id);
+      
     await load();
   }
 
@@ -334,6 +356,7 @@ export default function ExpedienteDetailPage() {
   const shownUltimaGestion = lastGest?.gestion ?? exp.ultima_gestion;
   const shownSeGiroA = lastGest?.se_giro_a ?? exp.se_giro_a;
   const shownDepActual = lastGest?.dependencia_actual ?? exp.dependencia_actual;
+  const shownLastUserUpdate = lastGest?.last_user_update ?? exp.last_user_update ?? null;
 
   const resolucionDirty = (resDraft ?? '') !== (exp.resolucion ?? '');
 
@@ -463,11 +486,22 @@ export default function ExpedienteDetailPage() {
           {resolucionErr ? <div className='mt-2 text-xs text-red-600'>{resolucionErr}</div> : null}
         </div>
 
+        <div className='rounded-xl border border-zinc-200 bg-white p-3 ultimo-movimiento-usuario'>
+          <div className='text-xs text-zinc-600'>
+            Último movimiento de usuario:{' '}
+            {shownLastUserUpdate ? (
+              <span className='font-medium text-zinc-900'>{shownLastUserUpdate}</span>
+            ) : (
+              <span className='text-zinc-400'>—</span>
+            )}
+          </div>
+        </div>
+
         {/* Cargar historial */}
         <div className='rounded-2xl border border-zinc-200 bg-white p-4'>
           <div className='mb-3'>
-            <div className='text-xs font-medium text-zinc-500'>Agregar movimiento</div>
-            <div className='text-sm font-semibold'>Cargar historial</div>
+            <div className='text-xs font-medium text-zinc-500 agregar-movimiento'>Agregar movimiento</div>
+            <div className='text-sm font-semibold agregar-movimiento-title'>Cargar historial</div>
           </div>
 
           {histErr ? (
@@ -552,6 +586,11 @@ export default function ExpedienteDetailPage() {
                       {g.se_giro_a && g.dependencia_actual ? ' · ' : null}
                       {g.dependencia_actual ? `Dep. actual: ${g.dependencia_actual}` : null}
                     </div>
+                    {g.last_user_update ? (
+                      <div className='mt-1 text-[11px] text-zinc-500'>
+                        Usuario: <span className='font-medium text-zinc-700'>{g.last_user_update}</span>
+                      </div>
+                    ) : null}                   
                   </li>
                 ))}
               </ol>
