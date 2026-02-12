@@ -372,15 +372,16 @@ export default function ExpedienteDetailPage() {
           .gestion { font-size: 14px; font-weight: 600; margin: 4px 0; }
           .extra { font-size: 12px; color: #444; }
           .user { font-size: 11px; color: #777; margin-top: 4px; }
+          .black{font-weight:bold}
         </style>
       </head>
       <body>
         <h1>Registro histórico - Expediente ${exp.expte_code ?? ''}</h1>
   
         <div class="meta">
-          Carátula: ${exp.caratula ?? ''}<br/>
-          Edificio: ${exp.edificio ?? ''}<br/>
-          Año: ${exp.anio ?? ''}
+          <span class="black">Carátula:</span> ${exp.caratula ?? ''}<br/>
+          <span class="black">Edificio:</span> ${exp.edificio ?? ''}<br/>
+          <span class="black">Año:</span> ${exp.anio ?? ''}
         </div>
   
         ${historialHtml}
