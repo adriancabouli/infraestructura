@@ -542,7 +542,7 @@ export default function ExpedienteDetailPage() {
               <ol className='space-y-4'>
                 {gest.map(g => (
                   <li key={g.id} className='relative pl-6'>
-                    <span className='absolute left-0 top-1.5 h-2 w-2 rounded-full bg-zinc-900' />
+                    <span className='historial-element absolute left-0 top-1.5 h-2 w-2 rounded-full bg-zinc-900' />
                     <div className='flex items-start justify-between gap-3'>
                       <div className='text-sm font-medium max-w-[1100px]'>{g.gestion ?? '—'}</div>
                       <div className='text-xs text-zinc-500'>{formatDateDMY(g.fecha)}</div>
