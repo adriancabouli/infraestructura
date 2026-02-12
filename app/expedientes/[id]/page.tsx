@@ -364,10 +364,10 @@ export default function ExpedienteDetailPage() {
         <meta charset="utf-8" />
         <style>
           body { font-family: Arial, sans-serif; padding: 24px; }
-          h1 { font-size: 18px; margin: 0 0 12px;color:#005e9a }
-          .meta { font-size: 12px; color: #555; margin-bottom: 40px; border-bottom: 1px solid #eee;padding-bottom:10px;}
+          h1 { font-size: 18px; margin: 0 0 12px;color:#005e9a ;}
+          .meta { font-size: 12px; color: #555; margin-bottom: 15px; padding-bottom:10px;}
   
-          .item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #eee;}
+          .item { margin-bottom: 14px; padding: 8px 15px 18px 15px; border: 1px solid #eee;border-radius:15px;background-color:#f7f7f7!important}
           .fecha { font-size: 12px; color: #666; margin-top:10px;margin-bottom:10px }
           .gestion { font-size: 14px; font-weight: 600; margin: 4px 0; }
           .extra { font-size: 12px; color: #444; }
