@@ -4,15 +4,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { Settings } from 'lucide-react';
 
-function NavItem({ href, label }: { href: string; label: string }) {
+function NavItem({ href, label }: { href: string; label: React.ReactNode }) {
+
   const path = usePathname();
 
-  // activo SOLO exacto
-  const isExact = path === href;
+  const isExact =
+    path === href ||
+    (href === '/configuracion' && path.startsWith('/edificios'));
 
-  // subruta (ej: /expedientes/123)
-  const isChild =
+  const isExpChild =
     href === '/expedientes' &&
     path.startsWith('/expedientes/') &&
     path !== '/expedientes/nuevo';
@@ -21,10 +23,10 @@ function NavItem({ href, label }: { href: string; label: string }) {
     <Link
       href={href}
       className={
-        'block rounded-lg px-4 py-2 text-sm transition ' +
+        'flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition ' +
         (isExact
           ? 'bg-[var(--brand-900)] text-white'
-          : isChild
+          : isExpChild
           ? 'bg-zinc-100 text-zinc-800'
           : 'text-zinc-700 hover:bg-zinc-100')
       }
@@ -86,7 +88,15 @@ export default function AppShell({
             <div className="my-3 border-t border-zinc-200" />
 
             <nav className="space-y-1">
-              <NavItem href="/edificios" label="Edificios" />
+            <NavItem
+                href="/configuracion"
+                label={
+                  <span className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    Configuración
+                  </span>
+                }
+              />
             </nav>
           </aside>
 
