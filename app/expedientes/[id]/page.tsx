@@ -472,7 +472,7 @@ export default function ExpedienteDetailPage() {
 
   if (loading) {
     return (
-      <AppShell title='Expediente'>
+      <AppShell title='Cargando expediente...'>
         <div className='text-sm text-zinc-500'>Cargando…</div>
       </AppShell>
     );

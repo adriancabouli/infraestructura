@@ -6,7 +6,7 @@ import { Building } from 'lucide-react';
 
 export default function ConfiguracionPage() {
   return (
-    <AppShell title='Configuración'>
+    <AppShell title='Configuración del sistema'>
       <div className='space-y-4'>
         <div className='text-sm text-zinc-600'>
           Panel de configuración del sistema.

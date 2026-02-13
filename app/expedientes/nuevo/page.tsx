@@ -152,7 +152,7 @@ export default function NuevoExpedientePage() {
 
   return (
     <AppShell
-      title="Nuevo expediente"
+      title="Ingresar nuevo"
       right={
         <Link
           className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium hover:bg-zinc-50"

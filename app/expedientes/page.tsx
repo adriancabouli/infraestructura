@@ -364,7 +364,7 @@ export default function ExpedientesPage() {
 
   return (
     <AppShell
-      title="Expedientes"
+      title="Listado de expedientes"
       right={
         <>
           <Link
