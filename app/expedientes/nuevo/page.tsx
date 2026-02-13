@@ -12,6 +12,7 @@ export default function NuevoExpedientePage() {
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [observaciones, setObservaciones] = useState('');
 
   const [expteCode, setExpteCode] = useState('');
   const [anio, setAnio] = useState<string>('');
@@ -55,6 +56,7 @@ export default function NuevoExpedientePage() {
     setNumeroResolucion('');
     setErr(null);
     setSubmitted(false);
+    setObservaciones('');
   }
 
   useEffect(() => {
@@ -117,6 +119,7 @@ export default function NuevoExpedientePage() {
         dependencia_actual: dependenciaActual.trim(),
         ultima_gestion: ultimaGestion.trim(),
         resolucion: numeroResolucion.trim(),
+        observaciones: observaciones.trim(),
       })
       .select('id')
       .single();
@@ -287,6 +290,19 @@ export default function NuevoExpedientePage() {
               className={fieldClass(submitted && isEmpty(ultimaGestion))}
             />
           </div>
+
+          <div className="md:col-span-2">
+            <label className="text-xs font-medium text-zinc-600">
+              Observaciones
+            </label>
+            <textarea
+              value={observaciones}
+              onChange={e => setObservaciones(e.target.value)}
+              className={fieldClass(false)}
+              rows={3}
+              placeholder="Notas internas…"
+            />
+          </div>         
         </div>
 
         <div className="flex items-center gap-3">

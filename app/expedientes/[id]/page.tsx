@@ -33,6 +33,7 @@ type Expediente = {
   resolucion: string | null;
   dependencia_actual: string | null;
   last_user_update: string | null;
+  observaciones: string | null;
 };
 
 type Gestion = {
@@ -122,6 +123,10 @@ export default function ExpedienteDetailPage() {
   const [savingResolucion, setSavingResolucion] = useState(false);
   const [resolucionErr, setResolucionErr] = useState<string | null>(null);
 
+  const [obsDraft, setObsDraft] = useState('');
+  const [savingObs, setSavingObs] = useState(false);
+  const [obsErr, setObsErr] = useState<string | null>(null);
+
   // historial (inputs)
   const [hFecha, setHFecha] = useState<string>('');
   const [hGestion, setHGestion] = useState<string>('');
@@ -186,6 +191,7 @@ export default function ExpedienteDetailPage() {
       setEditEdificioIds(ids);
       setEditTramite(expData.tipo_tramite ?? '');
       setResDraft(expData.resolucion ?? ''); // ✅ set draft
+      setObsDraft(expData.observaciones ?? '');
     }
 
     setGest((gData as any) ?? []);
@@ -299,6 +305,29 @@ export default function ExpedienteDetailPage() {
     setEditTramite(tramiteValue ?? '');
   }
 
+  async function saveObservaciones() {
+    if (!exp) return;
+  
+    setSavingObs(true);
+    setObsErr(null);
+  
+    const v = obsDraft && obsDraft.trim() ? obsDraft.trim() : null;
+  
+    const { error } = await supabase
+      .from('expedientes')
+      .update({ observaciones: v, last_user_update: userEmail || null })
+      .eq('id', exp.id);
+  
+    setSavingObs(false);
+  
+    if (error) {
+      setObsErr(error.message);
+      return;
+    }
+  
+    setExp(prev => (prev ? { ...prev, observaciones: v, last_user_update: userEmail || null } : prev));
+  }
+
   // ✅ guardar resolución SOLO al click
   async function saveResolucion() {
     if (!exp) return;
@@ -402,7 +431,7 @@ export default function ExpedienteDetailPage() {
         <title>Registro histórico - Expediente ${exp.expte_code ?? ''}</title>
         <meta charset="utf-8" />
         <style>
-          body { font-family: Arial, sans-serif; padding: 24px; }
+          body { font-family: Arial, sans-serif; padding: 0px; }
           h1 { font-size: 18px; margin: 0 0 12px;color:#005e9a ;}
           .meta { font-size: 12px; color: #555; margin-bottom: 15px; padding-bottom:10px;}
   
@@ -411,16 +440,17 @@ export default function ExpedienteDetailPage() {
           .gestion { font-size: 14px; font-weight: 600; margin: 4px 0; }
           .extra { font-size: 12px; color: #444; }
           .user { font-size: 11px; color: #777; margin-top: 4px; }
-          .black{font-weight:bold}
+          .black{font-weight:bold;}
+          .margin-bottom{margin-bottom:10px}
         </style>
       </head>
       <body>
         <h1>Registro histórico - Expediente ${exp.expte_code ?? ''}</h1>
   
         <div class="meta">
-          <span class="black">Carátula:</span> ${exp.caratula ?? ''}<br/>
-          <span class="black">Edificios:</span> ${edificiosTxt}<br/>
-          <span class="black">Año:</span> ${exp.anio ?? ''}
+          <div class="margin-bottom"><span class="black">Carátula:</span> ${exp.caratula ?? ''}<br/></div>
+          <div class="margin-bottom"><span class="black">Edificios:</span> ${edificiosTxt}<br/></div>
+          <div class=""><span class="black">Año:</span> ${exp.anio ?? ''}</div>
         </div>
   
         ${historialHtml}
@@ -460,6 +490,7 @@ export default function ExpedienteDetailPage() {
   const shownSeGiroA = lastGest?.se_giro_a ?? exp.se_giro_a;
   const shownDepActual = lastGest?.dependencia_actual ?? exp.dependencia_actual;
   const shownLastUserUpdate = lastGest?.last_user_update ?? exp.last_user_update ?? null;
+  const obsDirty = (obsDraft ?? '') !== (exp.observaciones ?? '');
 
   const resolucionDirty = (resDraft ?? '') !== (exp.resolucion ?? '');
 
@@ -580,6 +611,35 @@ export default function ExpedienteDetailPage() {
           </div>
 
           {resolucionErr ? <div className='mt-2 text-xs text-red-600'>{resolucionErr}</div> : null}
+        </div>
+
+        {/* ✅ Observaciones con botón Guardar */}
+        <div className='rounded-xl border border-zinc-200 bg-white p-3'>
+          <div className='flex items-center justify-between gap-2'>
+            <div className='text-xs font-medium text-zinc-500'>Observaciones</div>
+            {savingObs ? <div className='text-[11px] text-zinc-400'>Guardando…</div> : null}
+          </div>
+
+          <div className='mt-2 flex items-start gap-2'>
+            <textarea
+              value={obsDraft}
+              placeholder='Notas internas…'
+              onChange={e => setObsDraft(e.target.value)}
+              rows={3}
+              className='w-full resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10'
+            />
+
+            <button
+              type='button'
+              onClick={saveObservaciones}
+              disabled={savingObs || !obsDirty}
+              className='shrink-0 rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60'
+            >
+              Guardar
+            </button>
+          </div>
+
+          {obsErr ? <div className='mt-2 text-xs text-red-600'>{obsErr}</div> : null}
         </div>
 
         <div className='rounded-xl border border-zinc-200 bg-white p-3 ultimo-movimiento-usuario'>

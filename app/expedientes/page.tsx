@@ -299,7 +299,7 @@ export default function ExpedientesPage() {
         <title>Expedientes - Impresión</title>
         <meta charset="utf-8" />
         <style>
-          body { font-family: Arial, sans-serif; padding: 24px; }
+          body { font-family: Arial, sans-serif; padding: 0px; }
           h1 { font-size: 18px; margin: 0 0 12px; color:#005e9a; }
           .meta { font-size: 12px; color: #555; margin-bottom: 15px; }
           table { width: 100%; border-collapse: collapse; font-size: 12px; }
