@@ -80,7 +80,7 @@ export default function AppShell({
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-[240px_1fr]'>
 
           {/* SIDEBAR */}
-          <aside className='sticky top-6 flex h-[calc(100vh-48px)] flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm'>
+          <aside className='flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]'>
             {/* USER */}
             <div className='mb-4'>
               <div className='text-xs font-medium text-zinc-500'>
@@ -106,7 +106,7 @@ export default function AppShell({
             </nav>
 
             {/* CONFIGURACION ABAJO SIEMPRE */}
-            <div className='mt-auto pt-4'>
+            <div className='mt-auto'>
               <NavItem
                 href='/configuracion'
                 label='Configuración'
