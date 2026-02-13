@@ -74,6 +74,24 @@ export default function AppShell({
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  const pathname = usePathname();
+
+  function TitleIcon() {
+    if (pathname.startsWith('/expedientes/nuevo')) {
+      return <PlusCircle className='h-6 w-6 text-zinc-700' />;
+    }
+
+    if (pathname.startsWith('/expedientes')) {
+      return <Folder className='h-6 w-6 text-zinc-700' />;
+    }
+
+    if (pathname.startsWith('/configuracion') || pathname.startsWith('/edificios')) {
+      return <Settings className='h-6 w-6 text-zinc-700' />;
+    }
+
+    return null;
+  }
+
   return (
     <div className='min-h-screen'>
       <div className='mx-auto px-4 py-6'>
@@ -122,7 +140,8 @@ export default function AppShell({
                 <div className='text-xs font-medium text-zinc-500'>
                   Infraestructura - CSJN
                 </div>
-                <h1 className='text-2xl font-semibold tracking-tight title-header'>
+                <h1 className='flex items-center gap-2 text-2xl font-semibold tracking-tight title-header'>
+                  <TitleIcon />
                   {title}
                 </h1>
               </div>

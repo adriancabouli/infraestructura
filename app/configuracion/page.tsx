@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import AppShell from '@/components/AppShell';
+import { Building } from 'lucide-react';
 
 export default function ConfiguracionPage() {
   return (
@@ -16,12 +17,18 @@ export default function ConfiguracionPage() {
           <Link
             href='/edificios'
             className='rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:bg-zinc-50'
-          >
-            <div className='text-sm font-semibold'>Edificios</div>
-            <div className='mt-1 text-xs text-zinc-500'>
-              Administrar edificios del sistema
+            >
+            <div className='flex items-center gap-3'>
+                <Building className='h-5 w-5 text-zinc-700' />
+
+                <div>
+                <div className='text-sm font-semibold'>Edificios</div>
+                <div className='mt-1 text-xs text-zinc-500'>
+                    Administrar edificios del sistema
+                </div>
+                </div>
             </div>
-          </Link>
+            </Link>
         </div>
       </div>
     </AppShell>
