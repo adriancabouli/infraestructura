@@ -8,17 +8,24 @@ import { supabase } from '@/lib/supabaseClient';
 function NavItem({ href, label }: { href: string; label: string }) {
   const path = usePathname();
 
-  const active =
-    path === href ||
-    (href !== '/expedientes' && path.startsWith(href + '/'));
+  // activo SOLO exacto
+  const isExact = path === href;
+
+  // subruta (ej: /expedientes/123)
+  const isChild =
+    href === '/expedientes' &&
+    path.startsWith('/expedientes/') &&
+    path !== '/expedientes/nuevo';
 
   return (
     <Link
       href={href}
       className={
         'block rounded-lg px-4 py-2 text-sm transition ' +
-        (active
+        (isExact
           ? 'bg-[var(--brand-900)] text-white'
+          : isChild
+          ? 'bg-zinc-100 text-zinc-800'
           : 'text-zinc-700 hover:bg-zinc-100')
       }
     >
@@ -75,13 +82,19 @@ export default function AppShell({
               <NavItem href="/expedientes" label="Expedientes" />
               <NavItem href="/expedientes/nuevo" label="Nuevo expediente" />
             </nav>
+
+            <div className="my-3 border-t border-zinc-200" />
+
+            <nav className="space-y-1">
+              <NavItem href="/edificios" label="Edificios" />
+            </nav>
           </aside>
 
           <main className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-xs font-medium text-zinc-500">Infraestructura - CSJN</div>
-                <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+                <h1 className="text-2xl font-semibold tracking-tight title-header">{title}</h1>
               </div>
               <div className="flex items-center gap-2">{right}</div>
             </div>

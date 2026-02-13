@@ -500,7 +500,7 @@ export default function ExpedientesPage() {
           <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
             <div className="text-sm font-medium">Planilla</div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {loading ? (
                 <div className="text-xs text-zinc-500">Cargando…</div>
               ) : (

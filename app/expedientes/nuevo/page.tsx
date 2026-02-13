@@ -199,12 +199,12 @@ export default function NuevoExpedientePage() {
 
           <div>
             <label className="text-xs font-medium text-zinc-600">Edificio(s)</label>
-
             <EdificiosMultiSelect
               valueIds={edificioIds}
               onChangeIds={setEdificioIds}
               disabled={loading}
-              className={fieldClass(submitted && (!edificioIds || edificioIds.length === 0))}
+              invalid={submitted && edificioIds.length === 0}
+              className="mt-1"
             />
           </div>
 

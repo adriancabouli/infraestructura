@@ -2,22 +2,24 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-
 type EdificioRow = { id: string; nombre: string };
 
 export default function EdificiosMultiSelect({
-  valueIds,
-  onChangeIds,
-  disabled,
-  className,
-  allowCreate = true,
-}: {
-  valueIds: string[];
-  onChangeIds: (next: string[]) => void;
-  disabled?: boolean;
-  className?: string;
-  allowCreate?: boolean;
-}) {
+    valueIds,
+    onChangeIds,
+    disabled,
+    className,
+    allowCreate = true,
+    invalid,
+  }: {
+    valueIds: string[];
+    onChangeIds: (next: string[]) => void;
+    disabled?: boolean;
+    className?: string;
+    allowCreate?: boolean;
+    invalid?: boolean;
+  }) {
+  const computedInvalid = invalid ?? false; // default seguro
   const [opts, setOpts] = useState<EdificioRow[]>([]);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -33,6 +35,10 @@ export default function EdificiosMultiSelect({
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
+
+  useEffect(() => {
+    console.log('EdificiosMultiSelect invalid:', invalid, 'valueIds:', valueIds);
+  }, [invalid, valueIds]);
 
   useEffect(() => {
     (async () => {
@@ -96,7 +102,9 @@ export default function EdificiosMultiSelect({
     <div ref={boxRef} className={className}>
      <div
         className={
-            'relative min-h-[40px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 pr-10 text-sm outline-none ' +
+            'relative min-h-[40px] w-full rounded-xl border bg-white px-3 py-2 pr-10 text-sm outline-none seleccionar-edificios-combo-box transition-colors focus:ring-2 ' +
+            (invalid ? '!border-red-300 focus:ring-red-500/10' : 'border-zinc-200 focus:ring-zinc-900/10')+
+            ' ' +
             (disabled ? 'opacity-60' : 'cursor-pointer')
         }
         onClick={() => {
@@ -152,7 +160,7 @@ export default function EdificiosMultiSelect({
             ))}
             </div>
         ) : (
-            <span className='text-zinc-400'>Seleccionar edificios…</span>
+            <span className='text-zinc-400 seleccionar-edificios-text'>Seleccionar edificios…</span> 
         )}
         </div>
 
