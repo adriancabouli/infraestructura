@@ -80,8 +80,9 @@ export default function AppShell({
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-[240px_1fr]'>
 
           {/* SIDEBAR */}
-          <aside className='flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm'>
+          <aside className='sticky top-6 flex h-fit flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm'>
 
+            {/* USER */}
             <div className='mb-4'>
               <div className='text-xs font-medium text-zinc-500'>
                 {userName ? `Bienvenido/a` : 'Sistema'}
@@ -91,6 +92,7 @@ export default function AppShell({
               </div>
             </div>
 
+            {/* NAV PRINCIPAL */}
             <nav className='space-y-1'>
               <NavItem
                 href='/expedientes'
@@ -102,15 +104,17 @@ export default function AppShell({
                 label='Nuevo expediente'
                 icon={<PlusCircle className='h-4 w-4' />}
               />
+            </nav>
 
+            {/* CONFIGURACION ABAJO SIEMPRE */}
+            <div className='mt-auto pt-4'>
               <div className='my-3 border-t border-zinc-200' />
-
               <NavItem
                 href='/configuracion'
                 label='Configuración'
                 icon={<Settings className='h-4 w-4' />}
               />
-            </nav>
+            </div>
           </aside>
 
           {/* MAIN */}
@@ -131,6 +135,7 @@ export default function AppShell({
               {children}
             </div>
           </main>
+
         </div>
       </div>
     </div>
