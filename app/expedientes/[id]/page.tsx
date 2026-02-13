@@ -635,12 +635,13 @@ export default function ExpedienteDetailPage() {
               <div className='text-xs text-zinc-500'>{gest.length} registros</div>
 
               <button
-                type='button'
-                onClick={imprimirHistorial}
-                className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50'
-              >
-                Imprimir
-              </button>
+                  type="button"
+                  onClick={imprimirHistorial}
+                  disabled={!gest || gest.length === 0}
+                  className="rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Imprimir
+                </button>
             </div>
           </div>
 

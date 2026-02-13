@@ -247,6 +247,102 @@ export default function ExpedientesPage() {
     );
   }
 
+  function imprimirTabla() {
+    const htmlRows = (pageRows ?? [])
+      .map(r => {
+        const lastGest = r.gestiones && r.gestiones.length ? r.gestiones[0] : null;
+  
+        const shownDep = lastGest?.dependencia_actual ?? r.dependencia_actual ?? '';
+        const shownUltimaGestion = lastGest?.gestion ?? r.ultima_gestion ?? '';
+        const shownFechaGiro = lastGest?.fecha ?? '';
+  
+        return `
+          <tr>
+            <td>${r.expte_code ?? ''}</td>
+            <td>${r.anio ?? ''}</td>
+            <td>${r.edificio ?? ''}</td>
+            <td>${r.caratula ?? ''}</td>
+            <td>${r.fecha_ingreso ? formatDateDMY(r.fecha_ingreso) : ''}</td>
+            <td>${shownUltimaGestion ?? ''}</td>
+            <td>${r.tipo_tramite ?? ''}</td>
+            <td>${r.etiqueta ?? ''}</td>
+            <td>${r.resolucion ?? ''}</td>
+            <td>${shownFechaGiro ? formatDateDMY(shownFechaGiro) : ''}</td>
+            <td>${shownDep ?? ''}</td>
+          </tr>
+        `;
+      })
+      .join('');
+  
+    const html = `
+    <html>
+      <head>
+        <title>Expedientes - Impresión</title>
+        <meta charset="utf-8" />
+        <style>
+          body { font-family: Arial, sans-serif; padding: 24px; }
+          h1 { font-size: 18px; margin: 0 0 12px; color:#005e9a; }
+          .meta { font-size: 12px; color: #555; margin-bottom: 15px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th, td { border: 1px solid #e5e5e5; padding: 8px; vertical-align: top; }
+          th { background: #f5f5f5; text-align: left; }
+          th:nth-child(4),
+          td:nth-child(4) {
+            max-width: 150px;
+            white-space: normal;
+          }       
+          /* Dependencia actual (última columna larga) */
+          th:nth-child(11),
+          td:nth-child(11) {
+            max-width: 100px;
+            white-space: normal;
+          }
+
+        </style>
+      </head>
+      <body>
+        <h1>Expedientes (vista actual)</h1>
+        <div class="meta">
+          Página: ${page} / ${pageCount} · Mostrando: ${(pageRows ?? []).length} filas · Total filtrado: ${filtered.length}<br/>
+          Filtros: Trámite: ${tramite || 'Todos'} · Año: ${anio || 'Todos'} · Etiqueta: ${etiqueta || 'Todas'} · Búsqueda: ${q || '—'}
+        </div>
+  
+        <table>
+          <thead>
+            <tr>
+              <th>Exp.</th>
+              <th>Año</th>
+              <th>Edificio</th>
+              <th>Carátula/Referencia</th>
+              <th>Fecha ingreso</th>
+              <th>Última gestión</th>
+              <th>Trámite</th>
+              <th>Etiqueta</th>
+              <th>Resol.</th>
+              <th>Fecha giro</th>
+              <th>Dependencia actual</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${htmlRows}
+          </tbody>
+        </table>
+  
+        <script>
+          window.onload = function() { window.print(); window.close(); };
+        </script>
+      </body>
+    </html>
+    `;
+  
+    const w = window.open('', '_blank', 'width=1100,height=750');
+    if (!w) return;
+  
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
   return (
     <AppShell
       title="Expedientes"
@@ -384,11 +480,23 @@ export default function ExpedientesPage() {
           ) : null}
           <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
             <div className="text-sm font-medium">Planilla</div>
-            {loading ? (
-              <div className="text-xs text-zinc-500">Cargando…</div>
-            ) : (
-              <div className="text-xs text-zinc-500">{filtered.length} resultados</div>
-            )}
+
+            <div className="flex items-center gap-2">
+              {loading ? (
+                <div className="text-xs text-zinc-500">Cargando…</div>
+              ) : (
+                <div className="text-xs text-zinc-500">{filtered.length} resultados</div>
+              )}
+
+              <button
+                type="button"
+                onClick={imprimirTabla}
+                disabled={loading || !pageRows || pageRows.length === 0}
+                className="rounded-lg bg-[var(--brand-900)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Imprimir
+              </button>
+            </div>
           </div>
 
           <div className="overflow-auto">
