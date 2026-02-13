@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AppShell from '@/components/AppShell';
+import EdificiosMultiSelect from '@/components/EdificiosMultiSelect';
 
 export default function NuevoExpedientePage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function NuevoExpedientePage() {
 
   const [expteCode, setExpteCode] = useState('');
   const [anio, setAnio] = useState<string>('');
-  const [edificio, setEdificio] = useState('');
+  const [edificioIds, setEdificioIds] = useState<string[]>([]);
   const [caratula, setCaratula] = useState('');
   const [etiqueta, setEtiqueta] = useState('');
   const [tipoTramite, setTipoTramite] = useState('');
@@ -43,7 +44,7 @@ export default function NuevoExpedientePage() {
   function limpiarFormulario() {
     setExpteCode('');
     setAnio('');
-    setEdificio('');
+    setEdificioIds([]);
     setCaratula('');
     setEtiqueta('');
     setTipoTramite('');
@@ -78,7 +79,7 @@ export default function NuevoExpedientePage() {
     if (isEmpty(expteCode)) missing.push('N° Expediente');
     if (isEmpty(anio)) missing.push('Año');
     if (!fechaIngreso) missing.push('Fecha de ingreso');
-    if (isEmpty(edificio)) missing.push('Edificio');
+    if (!edificioIds || edificioIds.length === 0) missing.push('Edificio(s)');
     if (isEmpty(caratula)) missing.push('Carátula / Referencia');
     if (isEmpty(etiqueta)) missing.push('Etiqueta');
     if (isEmpty(numeroResolucion)) missing.push('N° Resolución');
@@ -108,7 +109,7 @@ export default function NuevoExpedientePage() {
         anio: anioNum,
         last_user_update: userEmail,
         fecha_ingreso: fechaIngreso,
-        edificio: edificio.trim(),
+        edificio: null,
         caratula: caratula.trim(),
         etiqueta: etiqueta.trim(),
         tipo_tramite: tipoTramite.trim(),
@@ -125,6 +126,22 @@ export default function NuevoExpedientePage() {
     if (error) {
       setErr(error.message);
       return;
+    }
+
+    if (edificioIds.length) {
+      const payload = edificioIds.map(edificio_id => ({
+        expediente_id: data.id,
+        edificio_id,
+      }));
+    
+      const { error: relErr } = await supabase
+        .from('expediente_edificios')
+        .insert(payload);
+    
+      if (relErr) {
+        setErr(relErr.message);
+        return;
+      }
     }
 
     router.push(`/expedientes/${data.id}`);
@@ -181,12 +198,13 @@ export default function NuevoExpedientePage() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-zinc-600">Edificio</label>
-            <input
-              value={edificio}
-              onChange={e => setEdificio(e.target.value)}
-              className={fieldClass(submitted && isEmpty(edificio))}
-              placeholder="Ej: PALACIO - TALCAHUANO 550"
+            <label className="text-xs font-medium text-zinc-600">Edificio(s)</label>
+
+            <EdificiosMultiSelect
+              valueIds={edificioIds}
+              onChangeIds={setEdificioIds}
+              disabled={loading}
+              className={fieldClass(submitted && (!edificioIds || edificioIds.length === 0))}
             />
           </div>
 

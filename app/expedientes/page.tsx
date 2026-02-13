@@ -27,7 +27,8 @@ type Expediente = {
   id: string;
   expte_code: string;
   anio: number | null;
-  edificio: string | null;
+  edificio: string | null; // legacy
+  edificios_rel?: { edificio: { id: string; nombre: string } }[] | null;
   caratula: string | null;
 
   fecha_ingreso: string | null;
@@ -52,6 +53,12 @@ function normalize(s: string) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase();
+}
+
+function edificiosToText(r: Expediente) {
+  const rel = r.edificios_rel ?? [];
+  if (rel.length) return rel.map(x => x.edificio?.nombre).filter(Boolean).join(', ');
+  return r.edificio ?? '';
 }
 
 function formatDateDMY(date: string | null) {
@@ -109,6 +116,9 @@ export default function ExpedientesPage() {
         expte_code,
         anio,
         edificio,
+        edificios_rel:expediente_edificios (
+          edificio:edificios ( id, nombre )
+        ),        
         caratula,
         fecha_ingreso,
         ultima_gestion,
@@ -169,7 +179,8 @@ export default function ExpedientesPage() {
       const lastDep = lastGest?.dependencia_actual ?? r.dependencia_actual ?? '';
 
       if (ql) {
-        const s = `${r.expte_code} ${r.edificio ?? ''} ${r.caratula ?? ''} ${lastDep}`.toLowerCase();
+        const edificiosTxt = edificiosToText(r);
+        const s = `${r.expte_code} ${edificiosTxt} ${r.caratula ?? ''} ${lastDep}`.toLowerCase();
         if (!s.includes(ql)) return false;
       }
 
@@ -179,7 +190,15 @@ export default function ExpedientesPage() {
 
   const stats = useMemo(() => {
     const total = rows.length;
-    const edificios = new Set(filtered.map(r => r.edificio).filter(Boolean)).size;
+    const edificios = new Set(
+      filtered
+        .flatMap(r => {
+          const rel = r.edificios_rel ?? [];
+          if (rel.length) return rel.map(x => x.edificio?.nombre).filter(Boolean);
+          return r.edificio ? [r.edificio] : [];
+        })
+        .filter(Boolean)
+    ).size;
     return { total, edificios };
   }, [rows, filtered]);
 
@@ -260,7 +279,7 @@ export default function ExpedientesPage() {
           <tr>
             <td>${r.expte_code ?? ''}</td>
             <td>${r.anio ?? ''}</td>
-            <td>${r.edificio ?? ''}</td>
+            <td>${(edificiosToText(r) ?? '')}</td>
             <td>${r.caratula ?? ''}</td>
             <td>${r.fecha_ingreso ? formatDateDMY(r.fecha_ingreso) : ''}</td>
             <td>${shownUltimaGestion ?? ''}</td>
@@ -552,7 +571,7 @@ export default function ExpedientesPage() {
                         </td>
 
                         <td className="px-4 py-3">
-                          {r.edificio ?? <span className="text-zinc-400">—</span>}
+                           {edificiosToText(r) ? edificiosToText(r) : <span className="text-zinc-400">—</span>}
                         </td>
 
                         <td className="px-4 py-3 max-w-[210px] whitespace-normal break-words">

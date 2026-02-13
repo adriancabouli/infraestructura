@@ -57,6 +57,8 @@
   .agregar-movimiento{padding-bottom: 9px}
   .agregar-movimiento-title{     color: #00609c; font-weight: bold; font-size: 16px; }
 
+  .seleccionar-edificios-text{position:relative}
+  
    /*LOGIN*/
   .main-login{background: #015f9b!important;}
   .login-head{color: #015f9b;}

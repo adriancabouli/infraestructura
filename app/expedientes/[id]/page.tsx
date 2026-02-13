@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import EtiquetaSelect from '@/components/EtiquetaSelect';
+import EdificiosMultiSelect from '@/components/EdificiosMultiSelect';
 
 const ETIQUETAS_OPCIONES = [
   'EN TRÁMITE PARA ESTA DIRECCIÓN',
@@ -18,6 +19,8 @@ type Expediente = {
   expte_code: string;
   anio: number | null;
   edificio: string | null;
+  edificios_rel?: { edificio: { id: string; nombre: string } }[] | null;
+
   caratula: string | null;
 
   fecha_ingreso: string | null;
@@ -110,7 +113,8 @@ export default function ExpedienteDetailPage() {
   const [userEmail, setUserEmail] = useState<string>('');
 
   // editables (se guardan en expedientes)
-  const [editEdificio, setEditEdificio] = useState('');
+  const [editEdificioIds, setEditEdificioIds] = useState<string[]>([]);
+  const [savingEdificios, setSavingEdificios] = useState(false);
   const [editTramite, setEditTramite] = useState('');
 
   // ✅ Resolución: ahora es "draft" local + botón Guardar
@@ -152,7 +156,12 @@ export default function ExpedienteDetailPage() {
 
     const { data: expData, error: expErr } = await supabase
       .from('expedientes')
-      .select('*')
+      .select(`
+        *,
+        edificios_rel:expediente_edificios (
+          edificio:edificios ( id, nombre )
+        )
+      `)
       .eq('id', id)
       .single();
 
@@ -172,7 +181,9 @@ export default function ExpedienteDetailPage() {
 
     if (!expErr && expData) {
       setExp(expData as any);
-      setEditEdificio(expData.edificio ?? '');
+      const rel = (expData as any).edificios_rel ?? [];
+      const ids = rel.map((x: any) => x?.edificio?.id).filter(Boolean);
+      setEditEdificioIds(ids);
       setEditTramite(expData.tipo_tramite ?? '');
       setResDraft(expData.resolucion ?? ''); // ✅ set draft
     }
@@ -213,30 +224,53 @@ export default function ExpedienteDetailPage() {
     );
   }
 
-  async function updateEdificio(next: string) {
+  async function updateEdificios(nextIds: string[]) {
     if (!exp) return;
-
-    setSavingEdificio(true);
+  
+    setSavingEdificios(true);
     setFieldErr(null);
-
-    const edificioValue = next && next.trim() ? next : null;
-
-    const { error } = await supabase
-      .from('expedientes')
-      .update({ edificio: edificioValue, last_user_update: userEmail || null })
-      .eq('id', exp.id);
-
-    setSavingEdificio(false);
-
-    if (error) {
-      setFieldErr(error.message);
+  
+    // 1) borrar todo lo actual
+    const { error: delErr } = await supabase
+      .from('expediente_edificios')
+      .delete()
+      .eq('expediente_id', exp.id);
+  
+    if (delErr) {
+      setSavingEdificios(false);
+      setFieldErr(delErr.message);
       return;
     }
-
-    setExp(prev =>
-      prev ? { ...prev, edificio: edificioValue, last_user_update: userEmail || null } : prev
-    );
-    setEditEdificio(edificioValue ?? '');
+  
+    // 2) insertar lo nuevo
+    if (nextIds.length) {
+      const payload = nextIds.map(edificio_id => ({
+        expediente_id: exp.id,
+        edificio_id,
+      }));
+  
+      const { error: insErr } = await supabase
+        .from('expediente_edificios')
+        .insert(payload);
+  
+      if (insErr) {
+        setSavingEdificios(false);
+        setFieldErr(insErr.message);
+        return;
+      }
+    }
+  
+    // 3) marcar last_user_update (y mantener legacy si querés fallback)
+    await supabase
+      .from('expedientes')
+      .update({ last_user_update: userEmail || null })
+      .eq('id', exp.id);
+  
+    setSavingEdificios(false);
+    setEditEdificioIds(nextIds);
+  
+    // refrescar exp para impresión / meta
+    await load();
   }
 
   async function updateTramite(next: string) {
@@ -357,6 +391,11 @@ export default function ExpedienteDetailPage() {
       )
       .join('');
   
+    const edificiosTxt =
+    exp.edificios_rel && exp.edificios_rel.length
+      ? exp.edificios_rel.map(x => x.edificio?.nombre).filter(Boolean).join(', ')
+      : (exp.edificio ?? '');
+
     const html = `
     <html>
       <head>
@@ -380,7 +419,7 @@ export default function ExpedienteDetailPage() {
   
         <div class="meta">
           <span class="black">Carátula:</span> ${exp.caratula ?? ''}<br/>
-          <span class="black">Edificio:</span> ${exp.edificio ?? ''}<br/>
+          <span class="black">Edificios:</span> ${edificiosTxt}<br/>
           <span class="black">Año:</span> ${exp.anio ?? ''}
         </div>
   
@@ -441,24 +480,17 @@ export default function ExpedienteDetailPage() {
         <div className='rounded-2xl border border-zinc-200 bg-zinc-50 p-4'>
           <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
             <div>
-              <div className='text-xs font-medium text-zinc-500'>Edificio</div>
-              <select
-                value={editEdificio}
-                onChange={e => {
-                  const v = e.target.value;
-                  setEditEdificio(v);
-                  updateEdificio(v);
+              <div className='text-xs font-medium text-zinc-500'>Edificio(s)</div>
+
+              <EdificiosMultiSelect
+                valueIds={editEdificioIds}
+                onChangeIds={next => {
+                  setEditEdificioIds(next);
+                  updateEdificios(next);
                 }}
-                disabled={savingEdificio}
-                className='margin-top-5 select-arrow mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-60'
-              >
-                <option value=''>Seleccionar…</option>
-                {EDIFICIOS.map(x => (
-                  <option key={x} value={x}>
-                    {x}
-                  </option>
-                ))}
-              </select>
+                disabled={savingEdificios}
+                className='mt-1'
+              />
             </div>
 
             <div>
