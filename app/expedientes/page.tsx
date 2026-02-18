@@ -144,7 +144,7 @@ export default function ExpedientesPage() {
       .order('id', { ascending: false, referencedTable: 'gestiones' })
       // ✅ nos quedamos solo con la última gestión por expediente
       .limit(1, { referencedTable: 'gestiones' })
-      .limit(100000);
+      .limit(10000);
 
     if (!error && data) setRows(data as any);
     setLoading(false);
@@ -484,7 +484,7 @@ export default function ExpedientesPage() {
           </div>
         ) : null}
 
-        <div className="overflow-hidden rounded-2xl border border-zinc-200">
+        <div className="overflow-hidden rounded-2xl border border-zinc-200 max-w-full lg:max-w-[calc(100vw-330px)]">
 
          {deleteErr ? (
             <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
