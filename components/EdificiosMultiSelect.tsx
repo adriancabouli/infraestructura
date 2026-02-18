@@ -165,7 +165,7 @@ export default function EdificiosMultiSelect({
         </div>
 
       {open ? (
-        <div className='mt-2 rounded-xl border border-zinc-200 bg-white p-2 shadow-sm'>
+        <div className='mt-2 rounded-xl border border-zinc-200 bg-white p-2 shadow-sm lista_edificios'>
           <input
             value={q}
             onChange={e => setQ(e.target.value)}

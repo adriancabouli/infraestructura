@@ -57,7 +57,7 @@
 
   .agregar-movimiento{padding-bottom: 9px}
   .agregar-movimiento-title{     color: #00609c; font-weight: bold; font-size: 16px; }
-
+  .lista_edificios{position:absolute;z-index: 1000!important;}
   .seleccionar-edificios-text{position:relative;top: 1px;left: 7px;}
   .seleccionar-edificios-combo-box{background-color: #fff; padding-left: 8px!important;} 
   .title-header{color:#000;margin-top: 5px!important;}
