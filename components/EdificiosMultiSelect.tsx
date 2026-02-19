@@ -126,7 +126,7 @@ export default function EdificiosMultiSelect({
                 <button
                   type='button'
                   disabled={disabled}
-                  className='text-zinc-500 hover:text-zinc-900'
+                  className='text-zinc-500 hover:text-zinc-900 remove_building'
                   onClick={e => {
                     e.stopPropagation();
                     onChangeIds(valueIds.filter(x => x !== s.id));

@@ -57,7 +57,6 @@
 
   .agregar-movimiento{padding-bottom: 9px}
   .agregar-movimiento-title{     color: #00609c; font-weight: bold; font-size: 16px; }
- /* .lista_edificios{position:absolute;z-index: 1000!important;}*/ 
  
   .seleccionar-edificios-text{position:relative;top: 1px;left: 7px;}
   .seleccionar-edificios-combo-box{background-color: #fff; padding-left: 8px!important;} 
@@ -71,6 +70,9 @@
   .ultimo-movimiento-usuario{background: #f6f6f6;} 
   .eliminado-ok {position: relative;top: -1px;left: -1px;width: calc(100% + 4px);padding-left: 15px;}
   
+  .remove_building{cursor: pointer;}
+  .remove_building:hover{cursor: pointer;    color: #c80008;}
+
   li.relative.pl-6 { border-bottom: 1px solid #e6e6e6; padding-bottom: 17px;}
   li.relative.pl-6:last-child { border-bottom: 0px solid #e6e6e6; padding-bottom: 0px;}
 
