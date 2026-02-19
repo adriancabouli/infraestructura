@@ -536,18 +536,18 @@ export default function ExpedienteDetailPage() {
 
             <div>
               <div className='text-xs font-medium text-zinc-500'>Fecha de ingreso</div>
-              <div className='margin-top-5 mt-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900'>
+              <div className='margin-top-5 mt-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 cursor-default'>
                 {exp.fecha_ingreso ? formatDateDMY(exp.fecha_ingreso) : <span className='text-zinc-400'>—</span>}
               </div>
             </div>
           </div>
 
           <div className='mt-4 text-xs font-medium text-zinc-500'>Carátula/Referencia</div>
-          <div className='mt-2 text-sm text-zinc-700'>{exp.caratula ?? ''}</div>
+          <div className='mt-2 text-sm text-zinc-700 cursor-default'>{exp.caratula ?? ''}</div>
         </div>
 
         {/* Datos */}
-        <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-3 md:grid-cols-3 cursor-default'>
           <KV k='Año' v={exp.anio} />
 
           <div className='rounded-xl border border-zinc-200 bg-white p-3'>
@@ -614,7 +614,7 @@ export default function ExpedienteDetailPage() {
               type='button'
               onClick={saveResolucion}
               disabled={savingResolucion || !resolucionDirty}
-              className='shrink-0 rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60'
+              className='shrink-0 rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-default cursor-pointer'
             >
               Guardar
             </button>
@@ -643,7 +643,7 @@ export default function ExpedienteDetailPage() {
               type='button'
               onClick={saveObservaciones}
               disabled={savingObs || !obsDirty}
-              className='shrink-0 rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60'
+              className='shrink-0 rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-default cursor-pointer'
             >
               Guardar
             </button>
@@ -719,7 +719,7 @@ export default function ExpedienteDetailPage() {
               type='button'
               onClick={cargarHistorial}
               disabled={savingHist}
-              className='rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60'
+              className='rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 cursor-pointer'
             >
               {savingHist ? 'Cargando…' : 'Cargar historial'}
             </button>
@@ -740,7 +740,7 @@ export default function ExpedienteDetailPage() {
                   type="button"
                   onClick={imprimirHistorial}
                   disabled={!gest || gest.length === 0}
-                  className="rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-default cursor-pointer"
                 >
                   Imprimir
                 </button>

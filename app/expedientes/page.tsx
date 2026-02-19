@@ -508,7 +508,7 @@ export default function ExpedientesPage() {
                   type="button"
                   onClick={() => setConfirmDeleteId(null)}
                   disabled={deleteRowId === confirmDeleteId}
-                  className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60"
+                  className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -521,7 +521,7 @@ export default function ExpedientesPage() {
                     if (id) await eliminarExpediente(id);
                   }}
                   disabled={deleteRowId === confirmDeleteId}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
                 >
                   Confirmar eliminar
                 </button>
@@ -557,7 +557,7 @@ export default function ExpedientesPage() {
                 type="button"
                 onClick={imprimirTabla}
                 disabled={loading || !pageRows || pageRows.length === 0}
-                className="rounded-lg bg-[var(--brand-900)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="rounded-lg bg-[var(--brand-900)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 Imprimir
               </button>
@@ -699,7 +699,7 @@ export default function ExpedientesPage() {
                                 type="button"
                                 onClick={() => setConfirmDeleteId(r.id)}
                                 disabled={deleteRowId === r.id}
-                                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60 active:scale-[0.97]"
+                                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60 active:scale-[0.97] cursor-pointer"
                               >
                                 {deleteRowId === r.id ? 'Eliminando…' : 'Eliminar'}
                               </button>

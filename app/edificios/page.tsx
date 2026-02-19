@@ -261,7 +261,7 @@ export default function EdificiosAdminPage() {
               type='button'
               onClick={createEdificio}
               disabled={creating}
-              className='rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60'
+              className='rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 cursor-pointer'
             >
               {creating ? 'Agregando…' : 'Agregar'}
             </button>
@@ -372,7 +372,7 @@ export default function EdificiosAdminPage() {
                                   type='button'
                                   onClick={() => cancelEdit()}
                                   disabled={savingId === r.id}
-                                  className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-60'
+                                  className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 cursor-pointer'
                                 >
                                   Cancelar
                                 </button>
@@ -380,7 +380,7 @@ export default function EdificiosAdminPage() {
                                   type='button'
                                   onClick={() => saveEdit(r.id)}
                                   disabled={savingId === r.id}
-                                  className='rounded-lg bg-[var(--brand-900)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-60'
+                                  className='rounded-lg bg-[var(--brand-900)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-60 cursor-pointer'
                                 >
                                   {savingId === r.id ? 'Guardando…' : 'Guardar'}
                                 </button>
@@ -391,7 +391,7 @@ export default function EdificiosAdminPage() {
                                   type='button'
                                   onClick={() => startEdit(r)}
                                   disabled={savingId === r.id}
-                                  className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-60'
+                                  className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 cursor-pointer'
                                 >
                                   Editar
                                 </button>
@@ -400,7 +400,7 @@ export default function EdificiosAdminPage() {
                                   type='button'
                                   onClick={() => setConfirmDeleteId(r.id)}
                                   disabled={deletingId === r.id}
-                                  className='rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60'
+                                  className='rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer'
                                 >
                                   Eliminar
                                 </button>

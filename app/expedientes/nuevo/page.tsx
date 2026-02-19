@@ -309,14 +309,14 @@ export default function NuevoExpedientePage() {
           <button
             type="button"
             onClick={limpiarFormulario}
-            className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium hover:bg-zinc-50"
+            className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium hover:bg-zinc-50 cursor-pointer"
           >
             Limpiar formulario
           </button>
 
           <button
             disabled={loading}
-            className="rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
+            className="rounded-xl bg-[var(--brand-900)] px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 cursor-pointer"
           >
             {loading ? 'Guardando…' : 'Crear expediente'}
           </button>

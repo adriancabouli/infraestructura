@@ -19,9 +19,9 @@ function normalize(s: string) {
 function badgeClassFromValue(value: string) {
   const v = normalize(value);
 
-  if (v.includes('PENDIENTE')) return 'badge badge-pendiente width-100-percent';
-  if (v.includes('TRAMITE')) return 'badge badge-tramite width-100-percent';
-  if (v.includes('FINALIZO')) return 'badge badge-finalizado width-100-percent';
+  if (v.includes('PENDIENTE')) return 'badge badge-pendiente width-100-percent cursor-pointer';
+  if (v.includes('TRAMITE')) return 'badge badge-tramite width-100-percent cursor-pointer';
+  if (v.includes('FINALIZO')) return 'badge badge-finalizado width-100-percent cursor-pointer';
 
   return 'badge bg-zinc-100 text-zinc-700';
 }
