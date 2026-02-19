@@ -8,7 +8,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata = {
-  title: 'Control de expedientes',
+  title: 'Control de expedientes - Infraestructura',
   description: 'Sistema de expedientes',
 };
 
