@@ -420,8 +420,9 @@ export default function ExpedientesPage() {
           </Link>
           <button
             onClick={logout}
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium hover:bg-zinc-50"
-          >
+            className="cursor-pointer rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium
+  transition-all duration-200 hover:bg-zinc-100 hover:border-zinc-300"
+           >
             Salir
           </button>
         </>
