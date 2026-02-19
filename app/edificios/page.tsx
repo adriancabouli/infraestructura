@@ -20,6 +20,14 @@ function normalize(s: string) {
     .trim();
 }
 
+function SpinnerOverlay() {
+  return (
+    <div className='absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-[1px]'>
+      <div className='h-14 w-14 animate-spin rounded-full border-[3px] border-zinc-300 border-t-zinc-900' />
+    </div>
+  );
+}
+
 export default function EdificiosAdminPage() {
   const router = useRouter();
 
@@ -280,7 +288,8 @@ export default function EdificiosAdminPage() {
         </div>
 
         {/* tabla */}
-        <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white'>
+        <div className='relative overflow-hidden rounded-2xl border border-zinc-200 bg-white min-h-[300px]'>
+          {loading && <SpinnerOverlay />}
           <div className='flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3'>
             <div className='text-sm font-medium'>Listado</div>
             {loading ? (
