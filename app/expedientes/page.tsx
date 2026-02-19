@@ -81,6 +81,51 @@ function formatDateDMY(date: string | null) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+function TableSkeleton({ rows = 8 }: { rows?: number }) {
+  return (
+    <div className='overflow-auto'>
+      <table className='min-w-full text-left text-sm'>
+        <thead className='bg-zinc-50 text-xs uppercase text-zinc-500'>
+          <tr>
+            <th className='px-4 py-3'>Exp.</th>
+            <th className='px-4 py-3'>Año</th>
+            <th className='px-4 py-3'>Edificio</th>
+            <th className='px-4 py-3'>Carátula/Referencia</th>
+            <th className='px-4 py-3'>Fecha de ingreso</th>
+            <th className='px-4 py-3'>Última gestión</th>
+            <th className='px-4 py-3'>Trámite</th>
+            <th className='px-4 py-3'>Etiqueta</th>
+            <th className='px-4 py-3'>Resol.</th>
+            <th className='px-4 py-3'>Fecha de giro</th>
+            <th className='px-4 py-3'>Dependencia actual</th>
+            <th className='px-4 py-3 w-[80px]'></th>
+          </tr>
+        </thead>
+
+        <tbody className='divide-y divide-zinc-100 bg-white'>
+          {Array.from({ length: rows }).map((_, i) => (
+            <tr key={i}>
+              {Array.from({ length: 12 }).map((__, j) => (
+                <td key={j} className='px-4 py-3'>
+                  <div className='h-4 w-full max-w-[180px] animate-pulse rounded bg-zinc-100' />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SpinnerOverlay() {
+  return (
+    <div className='absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-[1px]'>
+      <div className='h-14 w-14 animate-spin rounded-full border-[3px] border-zinc-300 border-t-zinc-900'></div>
+    </div>
+  );
+}
+
 export default function ExpedientesPage() {
   const router = useRouter();
   const [rows, setRows] = useState<Expediente[]>([]);
@@ -484,8 +529,8 @@ export default function ExpedientesPage() {
           </div>
         ) : null}
 
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 max-w-full lg:max-w-[calc(100vw-330px)]">
-
+        <div className="relative overflow-hidden rounded-2xl border border-zinc-200 max-w-full lg:max-w-[calc(100vw-330px)]">
+        {loading && <SpinnerOverlay />}
          {deleteErr ? (
             <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {deleteErr}
@@ -517,140 +562,142 @@ export default function ExpedientesPage() {
               </button>
             </div>
           </div>
-
-          <div className="overflow-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-zinc-50 text-xs uppercase text-zinc-500">
-                <tr>
-                  <th className="px-4 py-3">Exp.</th>
-                  <th className="px-4 py-3">Año</th>
-                  <th className="px-4 py-3">Edificio</th>
-                  <th className="px-4 py-3">Carátula/Referencia</th>
-                  <th className="min-w-[120px] px-4 py-3">Fecha de ingreso</th>
-                  <th className="px-4 py-3">Última gestión</th>
-                  <th className="px-4 py-3">Trámite</th>
-                  <th className="px-4 py-3">Etiqueta</th>
-                  <th className="px-4 py-3">Resol.</th>
-                  <th className="px-4 py-3">Fecha de giro</th>
-                  <th className="px-4 py-3">Dependencia actual</th>
-                  <th className="px-4 py-3 w-[80px]"></th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-zinc-100 bg-white">
-                {!loading && filtered.length === 0 ? (
+          {loading ? (
+          <TableSkeleton rows={10} />
+          ) : (
+            <div className="overflow-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-zinc-50 text-xs uppercase text-zinc-500">
                   <tr>
-                    <td className="px-4 py-6 text-zinc-500" colSpan={13}>
-                      Sin resultados.
-                    </td>
+                    <th className="px-4 py-3">Exp.</th>
+                    <th className="px-4 py-3">Año</th>
+                    <th className="px-4 py-3">Edificio</th>
+                    <th className="px-4 py-3">Carátula/Referencia</th>
+                    <th className="min-w-[120px] px-4 py-3">Fecha de ingreso</th>
+                    <th className="px-4 py-3">Última gestión</th>
+                    <th className="px-4 py-3">Trámite</th>
+                    <th className="px-4 py-3">Etiqueta</th>
+                    <th className="px-4 py-3">Resol.</th>
+                    <th className="px-4 py-3">Fecha de giro</th>
+                    <th className="px-4 py-3">Dependencia actual</th>
+                    <th className="px-4 py-3 w-[80px]"></th>
                   </tr>
-                ) : (
-                  pageRows.map(r => {
-                    const lastGest = r.gestiones && r.gestiones.length ? r.gestiones[0] : null;
+                </thead>
 
-                    // ✅ mostrado en tabla: última dependencia del historial
-                    const shownDep = lastGest?.dependencia_actual ?? r.dependencia_actual ?? null;
+                <tbody className="divide-y divide-zinc-100 bg-white">
+                  {!loading && filtered.length === 0 ? (
+                    <tr>
+                      <td className="px-4 py-6 text-zinc-500" colSpan={13}>
+                        Sin resultados.
+                      </td>
+                    </tr>
+                  ) : (
+                    pageRows.map(r => {
+                      const lastGest = r.gestiones && r.gestiones.length ? r.gestiones[0] : null;
 
-                    // ✅ mostrado en tabla: última gestión del historial
-                    const shownUltimaGestion = lastGest?.gestion ?? r.ultima_gestion ?? null;
-                    const shownFechaGiro = lastGest?.fecha ?? null;
+                      // ✅ mostrado en tabla: última dependencia del historial
+                      const shownDep = lastGest?.dependencia_actual ?? r.dependencia_actual ?? null;
 
-                    return (
-                      <tr key={r.id} className="hover:bg-zinc-50">
-                        <td className="px-4 py-3 w-[120px] break-words">
-                          <Link
-                            href={`/expedientes/${r.id}`}
-                            className="font-semibold text-zinc-900 hover:underline"
-                          >
-                            {r.expte_code}
-                          </Link>
-                        </td>
+                      // ✅ mostrado en tabla: última gestión del historial
+                      const shownUltimaGestion = lastGest?.gestion ?? r.ultima_gestion ?? null;
+                      const shownFechaGiro = lastGest?.fecha ?? null;
 
-                        <td className="px-4 py-3">
-                          {r.anio ?? <span className="text-zinc-400">—</span>}
-                        </td>
+                      return (
+                        <tr key={r.id} className="hover:bg-zinc-50">
+                          <td className="px-4 py-3 w-[120px] break-words">
+                            <Link
+                              href={`/expedientes/${r.id}`}
+                              className="font-semibold text-zinc-900 hover:underline"
+                            >
+                              {r.expte_code}
+                            </Link>
+                          </td>
 
-                        <td className="px-4 py-3">
-                           {edificiosToText(r) ? edificiosToText(r) : <span className="text-zinc-400">—</span>}
-                        </td>
+                          <td className="px-4 py-3">
+                            {r.anio ?? <span className="text-zinc-400">—</span>}
+                          </td>
 
-                        <td className="px-4 py-3 max-w-[210px] whitespace-normal break-words">
-                          <div className="text-zinc-700">
-                            {r.caratula ?? <span className="text-zinc-400">—</span>}
-                          </div>
-                        </td>
+                          <td className="px-4 py-3">
+                            {edificiosToText(r) ? edificiosToText(r) : <span className="text-zinc-400">—</span>}
+                          </td>
 
-                        <td className="min-w-[120px] px-4 py-3">
-                          {r.fecha_ingreso ? (
-                            formatDateDMY(r.fecha_ingreso)
-                          ) : (
-                            <span className="text-zinc-400">—</span>
-                          )}
-                        </td>
+                          <td className="px-4 py-3 max-w-[210px] whitespace-normal break-words">
+                            <div className="text-zinc-700">
+                              {r.caratula ?? <span className="text-zinc-400">—</span>}
+                            </div>
+                          </td>
 
-                        <td className="px-4 py-3">
-                          <div className="text-zinc-700 max-w-[150px] break-words">
-                            {shownUltimaGestion ? (
-                              shownUltimaGestion.length > 80 ? (
-                                shownUltimaGestion.slice(0, 80) + '…'
-                              ) : (
-                                shownUltimaGestion
-                              )
+                          <td className="min-w-[120px] px-4 py-3">
+                            {r.fecha_ingreso ? (
+                              formatDateDMY(r.fecha_ingreso)
                             ) : (
                               <span className="text-zinc-400">—</span>
                             )}
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="px-4 py-3">
-                          {r.tipo_tramite ?? <span className="text-zinc-400">—</span>}
-                        </td>
+                          <td className="px-4 py-3">
+                            <div className="text-zinc-700 max-w-[150px] break-words">
+                              {shownUltimaGestion ? (
+                                shownUltimaGestion.length > 80 ? (
+                                  shownUltimaGestion.slice(0, 80) + '…'
+                                ) : (
+                                  shownUltimaGestion
+                                )
+                              ) : (
+                                <span className="text-zinc-400">—</span>
+                              )}
+                            </div>
+                          </td>
 
-                        <td className="px-4 py-3">
-                          <EtiquetaSelect
-                            value={r.etiqueta}
-                            options={ETIQUETAS_OPCIONES as any}
-                            className="min-w-[120px] w-[120px]"
-                            disabled={savingRowId === r.id}
-                            onChange={next => updateEtiqueta(r.id, next)}
-                          />
-                        </td>
+                          <td className="px-4 py-3">
+                            {r.tipo_tramite ?? <span className="text-zinc-400">—</span>}
+                          </td>
 
-                        <td className="px-4 py-3 uppercase">
-                          {r.resolucion ?? <span className="text-zinc-400">—</span>}
-                        </td>
-                
-                        <td className="px-4 py-3 min-w-[120px]">
-                          {shownFechaGiro ? (
-                            formatDateDMY(shownFechaGiro)
-                          ) : (
-                            <span className="text-zinc-400">—</span>
-                          )}
-                        </td>
+                          <td className="px-4 py-3">
+                            <EtiquetaSelect
+                              value={r.etiqueta}
+                              options={ETIQUETAS_OPCIONES as any}
+                              className="min-w-[120px] w-[120px]"
+                              disabled={savingRowId === r.id}
+                              onChange={next => updateEtiqueta(r.id, next)}
+                            />
+                          </td>
 
-                        <td className="px-4 py-3 w-[80px] max-w-[80px] break-words whitespace-normal">
-                          {shownDep ?? <span className="text-zinc-400">—</span>}
-                        </td>
+                          <td className="px-4 py-3 uppercase">
+                            {r.resolucion ?? <span className="text-zinc-400">—</span>}
+                          </td>
+                  
+                          <td className="px-4 py-3 min-w-[120px]">
+                            {shownFechaGiro ? (
+                              formatDateDMY(shownFechaGiro)
+                            ) : (
+                              <span className="text-zinc-400">—</span>
+                            )}
+                          </td>
 
-                        <td className="px-4 py-3">
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDeleteId(r.id)}
-                              disabled={deleteRowId === r.id}
-                              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60 active:scale-[0.97]"
-                            >
-                              {deleteRowId === r.id ? 'Eliminando…' : 'Eliminar'}
-                            </button>
-                        </td>
+                          <td className="px-4 py-3 w-[80px] max-w-[80px] break-words whitespace-normal">
+                            {shownDep ?? <span className="text-zinc-400">—</span>}
+                          </td>
 
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                          <td className="px-4 py-3">
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(r.id)}
+                                disabled={deleteRowId === r.id}
+                                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60 active:scale-[0.97]"
+                              >
+                                {deleteRowId === r.id ? 'Eliminando…' : 'Eliminar'}
+                              </button>
+                          </td>
 
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
           <div className="flex items-center justify-between gap-3 border-t border-zinc-200 bg-white px-4 py-3 text-xs text-zinc-600">
             <div>
               Página <span className="font-medium">{page}</span> de{' '}
