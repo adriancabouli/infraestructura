@@ -46,6 +46,14 @@ type Gestion = {
   last_user_update: string | null;
 };
 
+function SpinnerOverlay() {
+  return (
+    <div className='absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-[1px]'>
+      <div className='h-14 w-14 animate-spin rounded-full border-[3px] border-zinc-300 border-t-zinc-900' />
+    </div>
+  );
+}
+
 function formatDateDMY(date: string | null) {
   if (!date) return '';
 
@@ -473,7 +481,9 @@ export default function ExpedienteDetailPage() {
   if (loading) {
     return (
       <AppShell title='Cargando expediente...'>
-        <div className='text-sm text-zinc-500'>Cargando…</div>
+        <div className='relative min-h-[220px]'>
+          <SpinnerOverlay />
+        </div>
       </AppShell>
     );
   }
