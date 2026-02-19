@@ -354,7 +354,7 @@ export default function EdificiosAdminPage() {
                             disabled={savingId === r.id}
                             onClick={() => toggleActivo(r.id, !isActive)}
                             className={
-                              'rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:opacity-60 ' +
+                              'cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:opacity-60 disabled:cursor-default ' +
                               (isActive
                                 ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                 : 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300')
