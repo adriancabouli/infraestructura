@@ -5,21 +5,21 @@ import { supabase } from '@/lib/supabaseClient';
 type EdificioRow = { id: string; nombre: string };
 
 export default function EdificiosMultiSelect({
-    valueIds,
-    onChangeIds,
-    disabled,
-    className,
-    allowCreate = true,
-    invalid,
-  }: {
-    valueIds: string[];
-    onChangeIds: (next: string[]) => void;
-    disabled?: boolean;
-    className?: string;
-    allowCreate?: boolean;
-    invalid?: boolean;
-  }) {
-  const computedInvalid = invalid ?? false; // default seguro
+  valueIds,
+  onChangeIds,
+  disabled,
+  className,
+  allowCreate = true,
+  invalid,
+}: {
+  valueIds: string[];
+  onChangeIds: (next: string[]) => void;
+  disabled?: boolean;
+  className?: string;
+  allowCreate?: boolean;
+  invalid?: boolean;
+}) {
+  const computedInvalid = invalid ?? false;
   const [opts, setOpts] = useState<EdificioRow[]>([]);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -35,10 +35,6 @@ export default function EdificiosMultiSelect({
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
-
-  useEffect(() => {
-    console.log('EdificiosMultiSelect invalid:', invalid, 'valueIds:', valueIds);
-  }, [invalid, valueIds]);
 
   useEffect(() => {
     (async () => {
@@ -78,7 +74,6 @@ export default function EdificiosMultiSelect({
       .single();
 
     setCreating(false);
-
     if (error) return;
 
     setOpts(prev => {
@@ -100,115 +95,98 @@ export default function EdificiosMultiSelect({
 
   return (
     <div ref={boxRef} className={className}>
-     <div
+      <div
         className={
-            'relative min-h-[40px] w-full rounded-xl border bg-white px-3 py-2 pr-10 text-sm outline-none seleccionar-edificios-combo-box transition-colors focus:ring-2 ' +
-            (invalid ? '!border-red-300 focus:ring-red-500/10' : 'border-zinc-200 focus:ring-zinc-900/10')+
-            ' ' +
-            (disabled ? 'opacity-60' : 'cursor-pointer')
+          'relative min-h-[40px] w-full rounded-xl border bg-white px-3 py-2 pr-10 text-sm outline-none seleccionar-edificios-combo-box transition-colors focus:ring-2 ' +
+          (computedInvalid ? '!border-red-300 focus:ring-red-500/10' : 'border-zinc-200 focus:ring-zinc-900/10') +
+          ' ' +
+          (disabled ? 'opacity-60' : 'cursor-pointer')
         }
         onClick={() => {
-            if (disabled) return;
-            setOpen(o => !o);
+          if (disabled) return;
+          setOpen(o => !o);
         }}
+      >
+        <span
+          className={
+            'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition-transform ' +
+            (open ? 'rotate-180' : 'rotate-0')
+          }
         >
-            {/* flecha (svg) */}
-            <span
-            className={
-                'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition-transform ' +
-                (open ? 'rotate-180' : 'rotate-0')
-            }
-            >
-            <svg
-                width='16'
-                height='16'
-                viewBox='0 0 20 20'
-                fill='none'
-                xmlns='http://www.w3.org/2000/svg'
-                aria-hidden='true'
-            >
-                <path
-                d='M5 7.5L10 12.5L15 7.5'
-                stroke='currentColor'
-                strokeWidth='1.8'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                />
-            </svg>
-            </span>
+          <svg width='16' height='16' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg' aria-hidden='true'>
+            <path d='M5 7.5L10 12.5L15 7.5' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round' />
+          </svg>
+        </span>
 
         {selected.length ? (
-            <div className='flex flex-wrap gap-2'>
+          <div className='flex flex-wrap gap-2'>
             {selected.map(s => (
-                <span
-                key={s.id}
-                className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs'
-                >
+              <span key={s.id} className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs'>
                 {s.nombre}
                 <button
-                    type='button'
-                    disabled={disabled}
-                    className='text-zinc-500 hover:text-zinc-900'
-                    onClick={e => {
+                  type='button'
+                  disabled={disabled}
+                  className='text-zinc-500 hover:text-zinc-900'
+                  onClick={e => {
                     e.stopPropagation();
                     onChangeIds(valueIds.filter(x => x !== s.id));
-                    }}
+                  }}
                 >
-                    ×
+                  ×
                 </button>
-                </span>
+              </span>
             ))}
-            </div>
-        ) : (
-            <span className='text-zinc-400 seleccionar-edificios-text'>Seleccionar edificios…</span> 
-        )}
-        </div>
-
-      {open ? (
-        <div className='mt-2 rounded-xl border border-zinc-200 bg-white p-2 shadow-sm lista_edificios'>
-          <input
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder='Buscar edificio…'
-            disabled={disabled}
-            className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10'
-          />
-
-          <div className='mt-2 max-h-[260px] overflow-auto'>
-            {filtered.length === 0 ? (
-              <div className='px-2 py-2 text-xs text-zinc-500'>Sin resultados.</div>
-            ) : (
-              filtered.map(o => (
-                <label
-                  key={o.id}
-                  className='flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 hover:bg-zinc-50'
-                >
-                  <input
-                    type='checkbox'
-                    checked={valueIds.includes(o.id)}
-                    onChange={() => toggle(o.id)}
-                    disabled={disabled}
-                  />
-                  <span className='text-sm text-zinc-800'>{o.nombre}</span>
-                </label>
-              ))
-            )}
           </div>
+        ) : (
+          <span className='text-zinc-400 seleccionar-edificios-text'>Seleccionar edificios…</span>
+        )}
+      </div>
 
-          {allowCreate && q.trim() ? (
-            <div className='mt-2 border-t border-zinc-100 pt-2'>
-              <button
-                type='button'
-                disabled={disabled || creating}
-                onClick={() => createAndSelect(q)}
-                className='w-full rounded-lg bg-[var(--brand-900)] px-3 py-2 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-40'
-              >
-                {creating ? 'Agregando…' : `Agregar "${q.trim()}"`}
-              </button>
+      {/* DROPDOWN ANIMADO (siempre montado) */}
+      <div
+        className={
+          'grid transition-[grid-template-rows,opacity] duration-200 ease-out ' +
+          (open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none')
+        }
+      >
+        <div className='min-h-0 overflow-hidden'>
+          <div className='mt-2 rounded-xl border border-zinc-200 bg-white p-2 lista_edificios'>
+            <input
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              placeholder='Buscar edificio…'
+              disabled={disabled}
+              className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10'
+            />
+
+            <div className='mt-2 max-h-[260px] overflow-auto'>
+              {filtered.length === 0 ? (
+                <div className='px-2 py-2 text-xs text-zinc-500'>Sin resultados.</div>
+              ) : (
+                filtered.map(o => (
+                  <label key={o.id} className='flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 hover:bg-zinc-50'>
+                    <input type='checkbox' checked={valueIds.includes(o.id)} onChange={() => toggle(o.id)} disabled={disabled} />
+                    <span className='text-sm text-zinc-800'>{o.nombre}</span>
+                  </label>
+                ))
+              )}
             </div>
-          ) : null}
+
+            {allowCreate && q.trim() ? (
+              <div className='mt-2 border-t border-zinc-100 pt-2'>
+                <button
+                  type='button'
+                  disabled={disabled || creating}
+                  onClick={() => createAndSelect(q)}
+                  className='w-full rounded-lg bg-[var(--brand-900)] px-3 py-2 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-40'
+                >
+                  {creating ? 'Agregando…' : `Agregar "${q.trim()}"`}
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
