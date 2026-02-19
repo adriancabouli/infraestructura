@@ -70,6 +70,7 @@
   .ultimo-movimiento-usuario{background: #f6f6f6;} 
   .eliminado-ok {position: relative;top: -1px;left: -1px;width: calc(100% + 4px);padding-left: 15px;}
   
+  .expediente_title_lista{color: #000; font-weight: bold; }
   .remove_building{cursor: pointer;}
   .remove_building:hover{cursor: pointer;    color: #c80008;}
 
